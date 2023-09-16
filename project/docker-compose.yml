@@ -12,3 +12,32 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+
+  authentication-service:
+    build:
+      context: ./../authentication-service
+      dockerfile: ./../authentication-service/authentication-service.dockerfile
+    restart: always
+    ports:
+      - "8081:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      DSN: "host=postgres port=5432 user=root password=secret dbname=blogpost sslmode=disable timezone=UTC connect_timeout=5"
+
+  postgres:
+    image: 'postgres:12-alpine'
+    ports:
+      - "542:5432"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: blogpost
+    volumes: 
+      - ./db-data/postgres/:/var/lib/postgresql/data/
+  
