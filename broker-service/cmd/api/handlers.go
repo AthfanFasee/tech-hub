@@ -29,12 +29,9 @@ type jsonRes struct {
 
 func (app *application) broker(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
-	payload := jsonRes{
-		Message: "Broker Server",
-	}
 
-	out, _ := json.MarshalIndent(payload, "", "\t")
-	w.Write(out)
+	app.writeJSON(w, http.StatusAccepted, envelope{"message": "Broker service"}, nil)
+
 }
 
 func (app *application) handleSubmission(w http.ResponseWriter, r *http.Request) {
@@ -126,8 +123,5 @@ func (app *application) authenticate(w http.ResponseWriter, r *http.Request, a A
 		app.serverErrorResponse(w, r, err)
 	}
 
-	var payload jsonRes
-	payload.Message = "Authenticated!"
-
-	app.writeJSON(w, http.StatusAccepted, make(envelope), nil)
+	app.writeJSON(w, http.StatusAccepted, envelope{"message": jsonFromService.Message}, nil)
 }
