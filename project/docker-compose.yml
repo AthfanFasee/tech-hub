@@ -35,6 +35,23 @@ services:
     environment:
       DSN: "host=postgres port=5432 user=root password=secret dbname=blogpost sslmode=disable timezone=UTC connect_timeout=5"
 
+  mailer-service:
+    build:
+      context: ./../mail-service
+      dockerfile: ./../mail-service/mail-service.dockerfile
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      MAIL_DOMAIN: localhost
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_ENCRYPTION: none
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      FROM_NAME: "Athfan Fasee"
+      FROM_ADDRESS: athfan@example.com
   postgres:
     image: 'postgres:12-alpine'
     ports:
@@ -60,3 +77,9 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=password
     volumes:
       - ./db-data/mongo/:/data/db
+
+  mailhog:
+    image: 'mailhog/mailhog:latest'
+    ports:
+      - "1025:1025"
+      - "8025:8025"

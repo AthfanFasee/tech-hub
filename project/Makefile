@@ -3,6 +3,7 @@ FRONT_END_BINARY=frontApp.exe
 BROKER_BINARY=brokerApp
 AUTH_BINARY=authenticationApp
 LOGGER_BINARY=loggerApp
+MAIL_BINARY=mailerApp
 
 
 # ==================================================================================== #
@@ -18,7 +19,7 @@ up:
 
 ## up_build: stops docker-compose (if running), builds all projects and starts docker compose
 .PHONY: up_build
-up_build: build_broker build_auth build_logger
+up_build: build_broker build_auth build_logger build_mail
 	@echo Stopping docker images (if running...)
 	docker-compose down
 	@echo Building (when required) and starting docker images...
@@ -51,4 +52,12 @@ build_logger:
 build_auth:
 	@echo Building auth binary...
 	chdir ..\authentication-service && set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0 && go build -o ${AUTH_BINARY} ./cmd/api
+	@echo Done!
+
+
+## build_mail: builds the auth binary as a linux executable
+.PHONY: build_mail
+build_mail:
+	@echo Building mail binary...
+	chdir ..\mail-service && set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0 && go build -o ${MAIL_BINARY} ./cmd/api
 	@echo Done!
