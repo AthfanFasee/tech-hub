@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/AthfanFasee/broker/event"
 )
 
 type RequestPayload struct {
@@ -47,7 +49,7 @@ func (app *application) handleSubmission(w http.ResponseWriter, r *http.Request)
 	case "auth":
 		app.authenticate(w, r, requestPayload.Auth)
 	case "log":
-		app.logItem(w, r, requestPayload.Log)
+		app.logEventViaRabbit(w, r, requestPayload.Log)
 	default:
 		app.badRequestResponse(w, r, errors.New("unknown action"))
 	}
@@ -124,4 +126,34 @@ func (app *application) authenticate(w http.ResponseWriter, r *http.Request, a A
 	}
 
 	app.writeJSON(w, http.StatusAccepted, envelope{"message": jsonFromService.Message}, nil)
+}
+
+func (app *application) logEventViaRabbit(w http.ResponseWriter, r *http.Request, l LogPayload) {
+	err := app.pushToQueue(l.Name, l.Data)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	app.writeJSON(w, http.StatusAccepted, envelope{"message": "logged via rabbit"}, nil)
+}
+
+func (app *application) pushToQueue(name, message string) error {
+	emitter, err := event.NewEventEmitter(app.Rabbit)
+	if err != nil {
+		return err
+	}
+
+	payload := LogPayload{
+		Name: name,
+		Data: message,
+	}
+
+	j, _ := json.MarshalIndent(&payload, "", "\t")
+	err = emitter.Push(string(j), "log.INFO")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

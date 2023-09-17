@@ -52,6 +52,15 @@ services:
       MAIL_PASSWORD: ""
       FROM_NAME: "Athfan Fasee"
       FROM_ADDRESS: athfan@example.com
+  
+  listener-service:
+    build:
+      context: ./../listener-service
+      dockerfile: ./../listener-service/listener-service.dockerfile
+    deploy:
+      mode: replicated
+      replicas: 1
+
   postgres:
     image: 'postgres:12-alpine'
     ports:
