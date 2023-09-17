@@ -1,3 +1,6 @@
 /project/db-data
 /authentication-service/authenticationApp
 /broker-service/brokerApp
+/mail-service/mailerApp
+/logger-service/loggerApp
+/listener-service/listenerApp
