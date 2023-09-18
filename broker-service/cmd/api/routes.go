@@ -23,5 +23,7 @@ func (app *application) routes() http.Handler {
 	router.Use(middleware.Heartbeat("/ping"))
 	router.Get("/", app.broker)
 	router.Post("/handle", app.handleSubmission)
+
+	router.Post("/log-grpc", app.logViaGRPC)
 	return router
 }

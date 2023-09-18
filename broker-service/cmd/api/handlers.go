@@ -2,11 +2,16 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/AthfanFasee/broker/event"
+	"github.com/AthfanFasee/broker/logs"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type RequestPayload struct {
@@ -156,4 +161,38 @@ func (app *application) pushToQueue(name, message string) error {
 	}
 
 	return nil
+}
+
+func (app *application) logViaGRPC(w http.ResponseWriter, r *http.Request) {
+	var requestPayload RequestPayload
+
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+	}
+
+	conn, err := grpc.Dial("logger-service:5001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+	}
+
+	defer conn.Close()
+
+	c := logs.NewLogServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	_, err = c.WriteLog(ctx, &logs.LogRequest{
+		LogEntry: &logs.Log{
+			Name: requestPayload.Log.Name,
+			Data: requestPayload.Log.Data,
+		},
+	})
+
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+	}
+
+	app.writeJSON(w, http.StatusAccepted, envelope{"message": "logged via grcp to mongo"}, nil)
+
 }
