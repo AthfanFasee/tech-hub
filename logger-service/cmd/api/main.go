@@ -47,6 +47,8 @@ func main() {
 		Models: data.New(client),
 	}
 
+	go app.gRPCListen()
+
 	// Start server
 	log.Println("Starting service on port", PORT)
 	srv := &http.Server{

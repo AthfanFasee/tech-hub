@@ -11,6 +11,6 @@ func (app *application) routes() http.Handler {
 	router := chi.NewRouter()
 
 	router.Use(middleware.Heartbeat("/ping"))
-	router.Post("/log", app.writeLog)
+	router.Post("/log", app.WriteLog)
 	return router
 }

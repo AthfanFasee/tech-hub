@@ -11,7 +11,7 @@ type JSONPayload struct {
 	Data string `json:"data"`
 }
 
-func (app *application) writeLog(w http.ResponseWriter, r *http.Request) {
+func (app *application) WriteLog(w http.ResponseWriter, r *http.Request) {
 	var requestPayload JSONPayload
 
 	_ = app.readJSON(w, r, &requestPayload)
