@@ -1,3 +1,4 @@
+# Build a very small docker image
 FROM alpine:latest
 
 RUN mkdir /app

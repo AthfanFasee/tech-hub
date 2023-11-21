@@ -37,6 +37,7 @@ type User struct {
 	Email     string    `json:"email"`
 	Name      string    `json:"name"`
 	Password  string    `json:"-"`
+	Admin     bool      `json:"admin"`
 	Bio       string    `json:"bio"`
 	Avatar    string    `json:"avatar"`
 	Active    int       `json:"active"`
@@ -49,7 +50,7 @@ func (u *User) GetAll() ([]*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, name, password, user_active, created_at
+	query := `select id, email, name, password, admin, user_active, created_at
 	from users order by last_name`
 
 	rows, err := db.QueryContext(ctx, query)
@@ -67,6 +68,7 @@ func (u *User) GetAll() ([]*User, error) {
 			&user.Email,
 			&user.Name,
 			&user.Password,
+			&user.Admin,
 			&user.Active,
 			&user.CreatedAt,
 		)
@@ -86,7 +88,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, first_name, last_name, password, user_active, created_at from users where email = $1`
+	query := `select id, email, first_name, last_name, password, admin, user_active, created_at from users where email = $1`
 
 	var user User
 	row := db.QueryRowContext(ctx, query, email)
@@ -96,6 +98,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 		&user.Email,
 		&user.Name,
 		&user.Password,
+		&user.Admin,
 		&user.Active,
 		&user.CreatedAt,
 	)
@@ -112,7 +115,7 @@ func (u *User) GetOne(id int) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, first_name, last_name, password, user_active, created_at from users where id = $1`
+	query := `select id, email, first_name, last_name, password, admin, user_active, created_at from users where id = $1`
 
 	var user User
 	row := db.QueryRowContext(ctx, query, id)
@@ -124,6 +127,7 @@ func (u *User) GetOne(id int) (*User, error) {
 		&user.Email,
 		&user.Name,
 		&user.Password,
+		&user.Admin,
 		&user.Active,
 		&user.CreatedAt,
 	)
@@ -135,8 +139,7 @@ func (u *User) GetOne(id int) (*User, error) {
 	return &user, nil
 }
 
-// Update updates one user in the database, using the information
-// stored in the receiver u
+// Update updates one user in the database, using the information stored in the receiver u
 func (u *User) Update() error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
@@ -206,13 +209,14 @@ func (u *User) Insert(user User) (int, error) {
 	}
 
 	var newID int
-	stmt := `insert into users (email, first_name, last_name, password, user_active, created_at)
-		values ($1, $2, $3, $4, $5, $6, $7) returning id`
+	stmt := `insert into users (email, first_name, last_name, password, admin, user_active, created_at)
+		values ($1, $2, $3, $4, $5, $6, $7, $8) returning id`
 
 	err = db.QueryRowContext(ctx, stmt,
 		user.Email,
 		user.Name,
 		hashedPassword,
+		false,
 		user.Active,
 		time.Now(),
 	).Scan(&newID)
@@ -244,8 +248,7 @@ func (u *User) ResetPassword(password string) error {
 }
 
 // PasswordMatches uses Go's bcrypt package to compare a user supplied password
-// with the hash we have stored for a given user in the database. If the password
-// and hash match, we return true; otherwise, we return false.
+// with the hash we have stored for a given user in the database.
 func (u *User) PasswordMatches(plainText string) (bool, error) {
 	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(plainText))
 	if err != nil {

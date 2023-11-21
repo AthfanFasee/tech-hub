@@ -21,6 +21,15 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+      
+  payment-service:
+    build:
+      context: ./../payment-service
+      dockerfile: ./../payment-service/payment-service.dockerfile
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
 
   authentication-service:
     build:

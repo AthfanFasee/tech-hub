@@ -6,4 +6,5 @@ use (
 	./listener-service
 	./logger-service
 	./mail-service
+	./payment-service
 )
