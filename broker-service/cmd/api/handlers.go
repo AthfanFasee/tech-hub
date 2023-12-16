@@ -30,6 +30,11 @@ type LogPayload struct {
 	Data string `json:"data"`
 }
 
+type RabbitPayload struct {
+	Name string `json:"name"`
+	Data string `json:"data"`
+}
+
 type jsonRes struct {
 	Message string `json:"message"`
 }
@@ -61,36 +66,36 @@ func (app *application) handleSubmission(w http.ResponseWriter, r *http.Request)
 
 }
 
-func (app *application) logItem(w http.ResponseWriter, r *http.Request, entry LogPayload) {
-	jsonData, _ := json.MarshalIndent(entry, "", "\t")
+// func (app *application) logItem(w http.ResponseWriter, r *http.Request, entry LogPayload) {
+// 	jsonData, _ := json.MarshalIndent(entry, "", "\t")
 
-	logServiceURL := "http://logger-service/log"
+// 	logServiceURL := "http://logger-service/log"
 
-	request, err := http.NewRequest("POST", logServiceURL, bytes.NewBuffer(jsonData))
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
-	}
+// 	request, err := http.NewRequest("POST", logServiceURL, bytes.NewBuffer(jsonData))
+// 	if err != nil {
+// 		app.badRequestResponse(w, r, err)
+// 		return
+// 	}
 
-	request.Header.Set("Content-Type", "application/json")
+// 	request.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+// 	client := &http.Client{}
 
-	response, err := client.Do(request)
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
-	}
+// 	response, err := client.Do(request)
+// 	if err != nil {
+// 		app.badRequestResponse(w, r, err)
+// 		return
+// 	}
 
-	defer response.Body.Close()
+// 	defer response.Body.Close()
 
-	if response.StatusCode != http.StatusAccepted {
-		app.badRequestResponse(w, r, err)
-		return
-	}
+// 	if response.StatusCode != http.StatusAccepted {
+// 		app.badRequestResponse(w, r, err)
+// 		return
+// 	}
 
-	app.writeJSON(w, http.StatusAccepted, envelope{"message": "logged"}, nil)
-}
+// 	app.writeJSON(w, http.StatusAccepted, envelope{"message": "logged"}, nil)
+// }
 
 func (app *application) authenticate(w http.ResponseWriter, r *http.Request, a AuthPayload) {
 	// Create some json and send to auth service
@@ -149,7 +154,7 @@ func (app *application) pushToQueue(name, message string) error {
 		return err
 	}
 
-	payload := LogPayload{
+	payload := RabbitPayload{
 		Name: name,
 		Data: message,
 	}

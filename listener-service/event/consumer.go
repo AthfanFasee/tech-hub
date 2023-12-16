@@ -29,6 +29,7 @@ func NewConsumer(conn *amqp.Connection) (Consumer, error) {
 }
 
 func (consumer *Consumer) setup() error {
+	// Channel acts as a communication pathway for the service to talk to RabbitMQ
 	channel, err := consumer.conn.Channel()
 	if err != nil {
 		return err

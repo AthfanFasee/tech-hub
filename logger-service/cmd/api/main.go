@@ -76,9 +76,10 @@ func main() {
 func connectToMongo() (*mongo.Client, error) {
 	// Connection options
 	clientOptions := options.Client().ApplyURI(mongoURL)
+	// Make these come from env variable in prod
 	clientOptions.SetAuth(options.Credential{
-		Username: "admin",
-		Password: "password",
+		Username: "root",
+		Password: "secret",
 	})
 
 	// Connect to DB
