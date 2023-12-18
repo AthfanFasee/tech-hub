@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/AthfanFasee/log-service/data"
+	"github.com/AthfanFasee/logger-service/data"
 )
 
 type JSONPayload struct {

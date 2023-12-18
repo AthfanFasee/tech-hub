@@ -1,18 +1,20 @@
 package event
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
+	"time"
 
+	"github.com/AthfanFasee/listener/logs"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Consumer struct {
-	conn      *amqp.Connection
-	queueName string
+	conn *amqp.Connection
 }
 
 func NewConsumer(conn *amqp.Connection) (Consumer, error) {
@@ -39,6 +41,11 @@ func (consumer *Consumer) setup() error {
 }
 
 type PayLoad struct {
+	Name string `json:"name"`
+	Data string `json:"data"`
+}
+
+type LogPayLoad struct {
 	Name string `json:"name"`
 	Data string `json:"data"`
 }
@@ -99,7 +106,7 @@ func handlePayload(payload PayLoad) {
 	switch payload.Name {
 	case "log", "event":
 		// log whatever we get
-		err := logEvent(payload)
+		err := logViaGRPC(payload)
 		if err != nil {
 			log.Println(err)
 		}
@@ -108,34 +115,33 @@ func handlePayload(payload PayLoad) {
 		// authenticate
 
 	default:
-		err := logEvent(payload)
+		err := logViaGRPC(payload)
 		if err != nil {
 			log.Println(err)
 		}
 	}
 }
 
-func logEvent(entry PayLoad) error {
-	jsonData, _ := json.MarshalIndent(entry, "", "\t")
-
-	logServiceURL := "http://logger-service/log"
-
-	request, err := http.NewRequest("POST", logServiceURL, bytes.NewBuffer(jsonData))
+func logViaGRPC(entry PayLoad) error {
+	conn, err := grpc.Dial("logger-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		return err
 	}
 
-	request.Header.Set("Content-Type", "application/json")
+	defer conn.Close()
 
-	client := &http.Client{}
+	c := logs.NewLogServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 
-	response, err := client.Do(request)
+	_, err = c.WriteLog(ctx, &logs.LogRequest{
+		LogEntry: &logs.Log{
+			Name: entry.Name,
+			Data: entry.Data,
+		},
+	})
+
 	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusAccepted {
 		return err
 	}
 

@@ -2,34 +2,22 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/AthfanFasee/broker/event"
-	"github.com/AthfanFasee/broker/logs"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type RequestPayload struct {
 	Action string      `json:"action"`
 	Auth   AuthPayload `json:"auth,omitempty"`
-	Log    LogPayload  `json:"log,omitempty"`
 }
 
 type AuthPayload struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
-
-type LogPayload struct {
-	Name string `json:"name"`
-	Data string `json:"data"`
-}
-
 type RabbitPayload struct {
 	Name string `json:"name"`
 	Data string `json:"data"`
@@ -58,8 +46,7 @@ func (app *application) handleSubmission(w http.ResponseWriter, r *http.Request)
 	switch requestPayload.Action {
 	case "auth":
 		app.authenticate(w, r, requestPayload.Auth)
-	case "log":
-		app.logEventViaRabbit(w, r, requestPayload.Log)
+
 	default:
 		app.badRequestResponse(w, r, errors.New("unknown action"))
 	}
@@ -138,15 +125,15 @@ func (app *application) authenticate(w http.ResponseWriter, r *http.Request, a A
 	app.writeJSON(w, http.StatusAccepted, envelope{"message": jsonFromService.Message}, nil)
 }
 
-func (app *application) logEventViaRabbit(w http.ResponseWriter, r *http.Request, l LogPayload) {
-	err := app.pushToQueue(l.Name, l.Data)
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
-	}
+// func (app *application) logEventViaRabbitMQ(w http.ResponseWriter, r *http.Request, l LogPayload) {
+// 	err := app.pushToQueue(l.Name, l.Data)
+// 	if err != nil {
+// 		app.badRequestResponse(w, r, err)
+// 		return
+// 	}
 
-	app.writeJSON(w, http.StatusAccepted, envelope{"message": "logged via rabbit"}, nil)
-}
+// 	app.writeJSON(w, http.StatusAccepted, envelope{"message": "logged via rabbit"}, nil)
+// }
 
 func (app *application) pushToQueue(name, message string) error {
 	emitter, err := event.NewEventEmitter(app.Rabbit)
@@ -166,38 +153,4 @@ func (app *application) pushToQueue(name, message string) error {
 	}
 
 	return nil
-}
-
-func (app *application) logViaGRPC(w http.ResponseWriter, r *http.Request) {
-	var requestPayload RequestPayload
-
-	err := app.readJSON(w, r, &requestPayload)
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-	}
-
-	conn, err := grpc.Dial("logger-service:5001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-	}
-
-	defer conn.Close()
-
-	c := logs.NewLogServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	_, err = c.WriteLog(ctx, &logs.LogRequest{
-		LogEntry: &logs.Log{
-			Name: requestPayload.Log.Name,
-			Data: requestPayload.Log.Data,
-		},
-	})
-
-	if err != nil {
-		app.badRequestResponse(w, r, err)
-	}
-
-	app.writeJSON(w, http.StatusAccepted, envelope{"message": "logged via grcp to mongo"}, nil)
-
 }

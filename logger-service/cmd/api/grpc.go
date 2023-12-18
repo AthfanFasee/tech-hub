@@ -6,8 +6,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/AthfanFasee/log-service/data"
-	"github.com/AthfanFasee/log-service/logs"
+	"github.com/AthfanFasee/logger-service/data"
+	"github.com/AthfanFasee/logger-service/logs"
 	"google.golang.org/grpc"
 )
 

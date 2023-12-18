@@ -1,4 +1,4 @@
-module github.com/AthfanFasee/log-service
+module github.com/AthfanFasee/logger-service
 
 go 1.21.1
 

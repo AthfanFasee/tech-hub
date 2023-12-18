@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/AthfanFasee/log-service/data"
+	"github.com/AthfanFasee/logger-service/data"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -15,7 +15,7 @@ import (
 const (
 	PORT     = "80"
 	mongoURL = "mongodb://mongo:27017"
-	gRpcPORT = "5001"
+	gRpcPORT = "50051"
 )
 
 var client *mongo.Client
