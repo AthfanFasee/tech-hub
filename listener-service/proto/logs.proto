@@ -10,11 +10,12 @@ message Log {
 }
 
 message LogRequest {
-    Log LogEntry = 1;
+    Log LogEntry = 3;
 }
 
 message LogResponse {
-    string result = 1;
+    bool error = 1;
+    string message = 2;
 }
 
 service LogService {

@@ -1,12 +1,16 @@
 package main
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/AthfanFasee/broker/event"
+	"github.com/AthfanFasee/broker/logs"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type RequestPayload struct {
@@ -84,34 +88,58 @@ func (app *application) handleSubmission(w http.ResponseWriter, r *http.Request)
 // 	app.writeJSON(w, http.StatusAccepted, envelope{"message": "logged"}, nil)
 // }
 
-func (app *application) authenticate(w http.ResponseWriter, r *http.Request, a AuthPayload) {
-	// Create some json and send to auth service
-	jsonData, _ := json.MarshalIndent(a, "", "\t")
+func (app *application) authenticate(w http.ResponseWriter, r *http.Request, a AuthPayload) error {
+	// // Create some json and send to auth service
+	// jsonData, _ := json.MarshalIndent(a, "", "\t")
 
-	// call service
-	request, err := http.NewRequest("POST", "http://authentication-service/authenticate", bytes.NewBuffer(jsonData))
+	// // call service
+	// request, err := http.NewRequest("POST", "http://authentication-service/authenticate", bytes.NewBuffer(jsonData))
+	// if err != nil {
+	// 	app.badRequestResponse(w, r, err)
+	// 	return
+	// }
+
+	// client := http.Client{}
+	// response, err := client.Do(request)
+	// if err != nil {
+	// 	app.badRequestResponse(w, r, err)
+	// 	return
+	// }
+	// defer response.Body.Close()
+
+	// // make sure we get abck correct status code
+
+	// if response.StatusCode == http.StatusUnauthorized {
+	// 	app.invalidCredentialsResponse(w, r)
+	// 	return
+	// } else if response.StatusCode != http.StatusAlreadyReported {
+	// 	app.serverErrorResponse(w, r, errors.New("error calling auth service"))
+	// 	return
+	// }
+
+	conn, err := grpc.Dial("logger-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
+		return err
 	}
 
-	client := http.Client{}
-	response, err := client.Do(request)
+	defer conn.Close()
+
+	c := logs.NewLogServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	_, err = c.WriteLog(ctx, &logs.LogRequest{
+		LogEntry: &logs.Log{
+			Name: entry.Name,
+			Data: entry.Data,
+		},
+	})
+
 	if err != nil {
-		app.badRequestResponse(w, r, err)
-		return
+		return err
 	}
-	defer response.Body.Close()
 
-	// make sure we get abck correct status code
-
-	if response.StatusCode == http.StatusUnauthorized {
-		app.invalidCredentialsResponse(w, r)
-		return
-	} else if response.StatusCode != http.StatusAlreadyReported {
-		app.serverErrorResponse(w, r, errors.New("error calling auth service"))
-		return
-	}
+	return nil
 
 	// create a var we'll read response.body into
 

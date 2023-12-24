@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package users;
+
+option go_package = "./users";
+
+
+message Empty {}
+
+message User {
+    int32 id = 1;
+    string email = 2;
+    string name = 3;
+    bytes password_hash = 4;
+    bool admin = 5;
+    string bio = 6;
+    string avatar = 7;
+    bool active = 8;
+    google.protobuf.Timestamp created_at = 9;
+}
+
+message Token {
+    string plaintext = 1;
+    bytes hash = 2;
+    int64 user_id = 3;
+    google.protobuf.Timestamp expiry = 4;
+    string scope = 5;
+}
+
+message AuthenticateRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message AuthenticateResponse {
+    Token token = 1;
+    string userName = 2;
+}
+
+message RegisterRequest {
+    string name = 1;
+    string email = 2;
+    string password = 3;
+}
+
+message RegisterResponse {
+    string message = 1;
+}
+
+message activateUserRequest {
+    string tokenPlainText = 1;
+}
+
+message GetUserRequest {
+    int32 id = 1;
+}
+
+message GetUserResponse {
+    User user = 1;
+}
+
+
+message GetUserByEmailRequest {
+    string email = 1;
+}
+
+
+service UserService {
+    rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc Activate(activateUserRequest) returns (RegisterResponse);
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
+    rpc GetUserByEmail(GetUserByEmailRequest) returns (GetUserResponse);
+    rpc DeleteUser(GetUserRequest) returns (RegisterResponse);
+}

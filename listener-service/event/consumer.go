@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/AthfanFasee/listener/logs"
+	logs "github.com/AthfanFasee/listener/proto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -42,12 +42,7 @@ func (consumer *Consumer) setup() error {
 
 type PayLoad struct {
 	Name string `json:"name"`
-	Data string `json:"data"`
-}
-
-type LogPayLoad struct {
-	Name string `json:"name"`
-	Data string `json:"data"`
+	Data any    `json:"data"`
 }
 
 func (consumer *Consumer) Listen(topics []string) error {
@@ -104,15 +99,14 @@ func (consumer *Consumer) Listen(topics []string) error {
 
 func handlePayload(payload PayLoad) {
 	switch payload.Name {
-	case "log", "event":
-		// log whatever we get
+	case "log", "error":
 		err := logViaGRPC(payload)
 		if err != nil {
 			log.Println(err)
 		}
 
-	case "auth":
-		// authenticate
+	case "mail":
+		// mail
 
 	default:
 		err := logViaGRPC(payload)
@@ -122,6 +116,7 @@ func handlePayload(payload PayLoad) {
 	}
 }
 
+// Logs to MongoDB via gRPC
 func logViaGRPC(entry PayLoad) error {
 	conn, err := grpc.Dial("logger-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
@@ -137,7 +132,7 @@ func logViaGRPC(entry PayLoad) error {
 	_, err = c.WriteLog(ctx, &logs.LogRequest{
 		LogEntry: &logs.Log{
 			Name: entry.Name,
-			Data: entry.Data,
+			Data: entry.Data.(string),
 		},
 	})
 

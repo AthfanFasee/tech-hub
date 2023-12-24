@@ -7,7 +7,7 @@ import (
 	"net"
 
 	"github.com/AthfanFasee/logger-service/data"
-	"github.com/AthfanFasee/logger-service/logs"
+	logs "github.com/AthfanFasee/logger-service/proto"
 	"google.golang.org/grpc"
 )
 
@@ -27,12 +27,13 @@ func (l *LogServer) WriteLog(ctx context.Context, req *logs.LogRequest) (*logs.L
 
 	err := l.Models.LogEntry.Insert(logEntry)
 	if err != nil {
-		res := &logs.LogResponse{Result: "failed"}
+		log.Printf("failed to insert log entry: %v", err)
+		res := &logs.LogResponse{Error: true, Message: fmt.Sprintf("failed to insert log entry: %v", err)}
 		return res, err
 	}
 
 	// Return response
-	res := &logs.LogResponse{Result: "logged to mongoDb via GRPC"}
+	res := &logs.LogResponse{Error: false, Message: "succesfully logged to mongoDB"}
 	return res, err
 
 }

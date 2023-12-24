@@ -14,7 +14,8 @@ message LogRequest {
 }
 
 message LogResponse {
-    string result = 1;
+    bool error = 1;
+    string message = 2;
 }
 
 service LogService {

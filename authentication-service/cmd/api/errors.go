@@ -1,82 +1,71 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/http"
+	"strings"
+
+	"github.com/AthfanFasee/authentication/data"
+	"github.com/AthfanFasee/authentication/validator"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-func (app *application) logError(r *http.Request, err error) {
-	logMessage := fmt.Sprintf("Error: %v, request_method: %s, request_url: %s",
-		err, r.Method, r.URL.String())
-	log.Println(logMessage)
-}
-
-func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, status int, message interface{}) {
-	env := envelope{"error": message}
-
-	err := app.writeJSON(w, status, env, nil)
-	// Incase we cannot write a JSON err response, we will log the err and send the user a 500 err code by default
+// Logs server error via RabbitMQ and returns a gRPC error
+func (app *application) ServerErrorResponse(message string) error {
+	err := app.logViaRabbit("error", message, "log.ERROR")
 	if err != nil {
-		app.logError(r, err)
-		w.WriteHeader(500)
+		log.Printf("error logging via rabbitmq: %v", err.Error())
 	}
+	return status.Errorf(codes.Internal, "the server encountered a problem and could not process your request")
 }
 
-func (app *application) serverErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
-	app.logError(r, err)
-
-	message := "the server encountered a problem and could not process your request"
-	app.errorResponse(w, r, http.StatusInternalServerError, message)
+// Logs server error via RabbitMQ and returns a gRPC error
+func (app *application) EditConflictResponse(message string) error {
+	err := app.logViaRabbit("error", message, "log.ERROR")
+	if err != nil {
+		log.Printf("error logging via rabbitmq: %v", err.Error())
+	}
+	return status.Errorf(codes.Internal, "unable to update the record due to an edit conflict, please try again")
 }
 
-func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
-	app.errorResponse(w, r, http.StatusBadRequest, err.Error())
+// Validates user input data and returns an gRPC error if validation fails
+func (app *application) userValidationFailedResponse(v *validator.Validator, user *data.User, validate bool) error {
+	if validate {
+		data.ValidateUser(v, user)
+	}
+
+	err := app.checkValidationStatus(v)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request) {
-	message := "requested resource is not found"
-	app.errorResponse(w, r, http.StatusNotFound, message)
+// Validates token plain text and returns an gRPC error if validation fails
+func (app *application) tokenValidationFailedResponse(v *validator.Validator, token string, validate bool) error {
+	if validate {
+		data.ValidateTokenPlainText(v, token)
+	}
+
+	err := app.checkValidationStatus(v)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (app *application) methodNotAllowedResponse(w http.ResponseWriter, r *http.Request) {
-	message := fmt.Sprintf("method %s is not supported", r.Method)
-	app.errorResponse(w, r, http.StatusMethodNotAllowed, message)
-}
+func (app *application) checkValidationStatus(v *validator.Validator) error {
+	if !v.Valid() {
+		var errorMessages []string
+		for _, errMsg := range v.Errors {
+			errorMessages = append(errorMessages, errMsg)
+		}
 
-func (app *application) validationFailedResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
-	app.errorResponse(w, r, http.StatusUnprocessableEntity, errors)
-}
+		combinedErrors := strings.Join(errorMessages, ", ")
+		return status.Errorf(codes.Internal, "Errors: %s", combinedErrors)
+	}
 
-func (app *application) editConflictResponse(w http.ResponseWriter, r *http.Request) {
-	message := "unable to update the record due to an edit conflict, please try again"
-	app.errorResponse(w, r, http.StatusConflict, message)
-}
-
-func (app *application) rateLimitExceededResponse(w http.ResponseWriter, r *http.Request) {
-	message := "rate limit exceeded"
-	app.errorResponse(w, r, http.StatusTooManyRequests, message)
-}
-
-func (app *application) invalidCredentialsResponse(w http.ResponseWriter, r *http.Request) {
-	message := "invalid email or password"
-	app.errorResponse(w, r, http.StatusUnauthorized, message)
-}
-
-func (app *application) invalidAuthenticationTokenResponse(w http.ResponseWriter, r *http.Request) {
-	// Inform client that we expect them to authenticate using a bearer token
-	w.Header().Set("WWWW-Authenticate", "Bearer")
-
-	message := "authentication token is invalid or missing"
-	app.errorResponse(w, r, http.StatusUnauthorized, message)
-}
-
-func (app *application) authenticationRequiredResponse(w http.ResponseWriter, r *http.Request) {
-	message := "you must be authenticated to access this resource"
-	app.errorResponse(w, r, http.StatusUnauthorized, message)
-}
-
-func (app *application) inactiveAccountResponse(w http.ResponseWriter, r *http.Request) {
-	message := "your user account must be activated"
-	app.errorResponse(w, r, http.StatusForbidden, message)
+	return nil
 }

@@ -5,27 +5,50 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
+	"math"
 	"os"
 	"time"
 
 	"github.com/AthfanFasee/authentication/data"
 	_ "github.com/lib/pq"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-const PORT = "80"
-
-var counts int64
+type config struct {
+	port       int
+	gRPCPort   int
+	postgreDSN string
+	rabbitDSN  string
+}
 
 type application struct {
+	config config
 	DB     *sql.DB
 	Models data.Models
+	Rabbit *amqp.Connection
 }
 
 func main() {
+	var cfg config
+
+	cfg.postgreDSN = "postgreDSN"
+	cfg.port = 80
+	cfg.gRPCPort = 50051
+
 	log.Println("Starting authentication service")
 
-	db := connectToDB()
+	// Connect to PostgreSQL
+	db, err := connectToPostgreSQL(cfg.postgreDSN)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+	// Connect to RabbitMQ
+	rabbitConn, err := connectToRabbit(cfg.rabbitDSN)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
 
 	if db == nil {
 		log.Panic()
@@ -33,20 +56,15 @@ func main() {
 
 	defer db.Close()
 
-	app := application{
+	app := &application{
+		config: cfg,
 		DB:     db,
-		Models: data.New(db),
+		Models: data.NewModels(db),
+		Rabbit: rabbitConn,
 	}
 
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", PORT),
-		Handler: app.routes(),
-	}
-
-	err := srv.ListenAndServe()
-	if err != nil {
-		log.Panic(err)
-	}
+	// Start gRPC server
+	app.gRPCListen()
 }
 
 func openDB(dsn string) (*sql.DB, error) {
@@ -66,8 +84,8 @@ func openDB(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
-func connectToDB() *sql.DB {
-	dsn := os.Getenv("DSN")
+func connectToPostgreSQL(dsn string) (*sql.DB, error) {
+	var counts int64
 
 	for {
 		connection, err := openDB(dsn)
@@ -76,16 +94,46 @@ func connectToDB() *sql.DB {
 			counts++
 		} else {
 			log.Println("Connected to Postgres!")
-			return connection
+			return connection, nil
 		}
 
 		if counts > 10 {
-			log.Println(err)
-			return nil
+			return nil, err
 		}
 
 		log.Println("Backing off for two seconds....")
 		time.Sleep(2 * time.Second)
 		continue
 	}
+}
+
+func connectToRabbit(dsn string) (*amqp.Connection, error) {
+	var counts int64
+	var backOff = 1 * time.Second
+	var connection *amqp.Connection
+
+	// Wait until rabbitmq is ready
+	for {
+		c, err := amqp.Dial(dsn)
+		if err != nil {
+			fmt.Println("RabbitMQ is not yet ready...")
+			counts++
+		} else {
+			log.Println("Connected to RabbitMQ")
+			connection = c
+			break
+		}
+
+		if counts > 5 {
+			fmt.Println(err)
+			return nil, err
+		}
+
+		backOff = time.Duration(math.Pow(float64(counts), 2)) * time.Second
+		log.Println("Backing off...")
+		time.Sleep(backOff)
+		continue
+	}
+
+	return connection, nil
 }
