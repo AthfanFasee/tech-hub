@@ -7,7 +7,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/AthfanFasee/authentication/validator"
+	"github.com/AthfanFasee/authentication/internal/validator"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -17,7 +17,7 @@ var db *sql.DB
 
 // User is the structure which holds one user from the database.
 type User struct {
-	ID        int       `json:"id"`
+	ID        int64     `json:"id"`
 	Email     string    `json:"email"`
 	Name      string    `json:"name"`
 	Password  Password  `json:"-"`
@@ -72,7 +72,7 @@ func (u UserModel) GetByEmail(email string) (*User, error) {
 }
 
 // Returns one user by id
-func (u UserModel) GetOne(id int) (*User, error) {
+func (u UserModel) GetOne(id int64) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
@@ -191,7 +191,7 @@ func (u UserModel) Update(user *User) error {
 }
 
 // Deletes one user from the database, by ID
-func (u UserModel) DeleteByID(id int) error {
+func (u UserModel) DeleteByID(id int64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
@@ -250,7 +250,7 @@ func (u UserModel) GetForToken(tokenScope, tokenPlainText string) (*User, error)
 }
 
 // ResetPassword is the method we will use to change a user's password.
-func (u UserModel) ResetPassword(password string, id int) error {
+func (u UserModel) ResetPassword(password string, id int64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 

@@ -21,11 +21,11 @@ type Models struct {
 	Users interface {
 		Insert(user *User) (int, error)
 		GetByEmail(email string) (*User, error)
-		GetOne(id int) (*User, error)
-		DeleteByID(id int) error
+		GetOne(id int64) (*User, error)
+		DeleteByID(id int64) error
 		Update(user *User) error
 		GetForToken(tokenScope, tokenPlainText string) (*User, error)
-		ResetPassword(password string, id int) error
+		ResetPassword(password string, id int64) error
 	}
 }
 

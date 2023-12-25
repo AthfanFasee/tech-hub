@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AthfanFasee/authentication/data"
 	"github.com/AthfanFasee/authentication/event"
+	"github.com/AthfanFasee/authentication/internal/data"
+	"github.com/AthfanFasee/authentication/internal/validator"
 	users "github.com/AthfanFasee/authentication/proto"
-	"github.com/AthfanFasee/authentication/validator"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
@@ -39,7 +39,7 @@ type RabbitPayload struct {
 // Gets a single user by id
 func (u *UserService) GetUser(ctx context.Context, req *users.GetUserRequest) (*users.GetUserResponse, error) {
 	id := req.GetId()
-	result, err := u.Models.Users.GetOne(int(id))
+	result, err := u.Models.Users.GetOne(int64(id))
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -53,7 +53,7 @@ func (u *UserService) GetUser(ctx context.Context, req *users.GetUserRequest) (*
 	}
 
 	user := users.User{
-		Id:        int32(result.ID),
+		Id:        int64(result.ID),
 		Email:     result.Email,
 		Name:      result.Name,
 		Admin:     result.Admin,
@@ -84,7 +84,7 @@ func (u *UserService) GetUserByEmail(ctx context.Context, req *users.GetUserByEm
 	}
 
 	user := users.User{
-		Id:        int32(result.ID),
+		Id:        int64(result.ID),
 		Email:     result.Email,
 		Name:      result.Name,
 		Admin:     result.Admin,
@@ -101,7 +101,7 @@ func (u *UserService) GetUserByEmail(ctx context.Context, req *users.GetUserByEm
 // Deletes a single user by id
 func (u *UserService) DeleteUser(ctx context.Context, req *users.GetUserRequest) (*users.RegisterResponse, error) {
 	id := req.GetId()
-	err := u.Models.Users.DeleteByID(int(id))
+	err := u.Models.Users.DeleteByID(int64(id))
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -141,7 +141,9 @@ func (u *UserService) Register(ctx context.Context, req *users.RegisterRequest) 
 
 	v := validator.New()
 
-	err = u.Application.userValidationFailedResponse(v, user, true)
+	data.ValidateUser(v, user)
+
+	err = u.Application.ValidationFailedResponse(v)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +153,7 @@ func (u *UserService) Register(ctx context.Context, req *users.RegisterRequest) 
 		switch {
 		case errors.Is(err, data.ErrDuplicateEmail):
 			v.AddError("email", " email address already exists")
-			err = u.Application.userValidationFailedResponse(v, user, false)
+			err = u.Application.ValidationFailedResponse(v)
 			if err != nil {
 				return nil, err
 			}
@@ -252,8 +254,8 @@ func (u *UserService) Activate(ctx context.Context, req *users.ActivateUserReque
 	tokenPlainText := req.GetTokenPlainText()
 
 	v := validator.New()
-
-	err := u.Application.tokenValidationFailedResponse(v, tokenPlainText, true)
+	data.ValidateTokenPlainText(v, tokenPlainText)
+	err := u.Application.ValidationFailedResponse(v)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +265,7 @@ func (u *UserService) Activate(ctx context.Context, req *users.ActivateUserReque
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
 			v.AddError("token", "invalid or expired token")
-			err = u.Application.tokenValidationFailedResponse(v, tokenPlainText, false)
+			err = u.Application.ValidationFailedResponse(v)
 			if err != nil {
 				return nil, err
 			}

@@ -1,6 +1,15 @@
 /project/db-data
 /authentication-service/authenticationApp
+/authentication-service/.env
 /broker-service/brokerApp
+/broker-service/.env
 /mail-service/mailerApp
+/mail-service/.env
 /logger-service/loggerApp
+/logger-service/.env
 /listener-service/listenerApp
+/listener-service/.env
+/payment-service/paymentApp
+/payment-service/.env
+/posts-service/postsApp
+/posts-service/.env

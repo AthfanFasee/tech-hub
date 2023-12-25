@@ -4,7 +4,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/AthfanFasee/authentication/internal/validator"
+	"github.com/AthfanFasee/posts/internal/validator"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

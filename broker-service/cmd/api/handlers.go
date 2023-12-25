@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/AthfanFasee/broker/event"
-	"github.com/AthfanFasee/broker/logs"
+	logs "github.com/AthfanFasee/broker/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

@@ -9,13 +9,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/AthfanFasee/authentication/internal/data"
+	"github.com/AthfanFasee/posts/internal/data"
+	"github.com/AthfanFasee/posts/util"
 	_ "github.com/lib/pq"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type config struct {
-	port       int
 	gRPCPort   int
 	postgreDSN string
 	rabbitDSN  string
@@ -31,8 +31,18 @@ type application struct {
 func main() {
 	var cfg config
 
+	// Set up configs from env file
+	env, err := util.LoadEnv()
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+
+	cfg.gRPCPort = env.GrpcServerPort
+	cfg.postgreDSN = env.PostgreDSN
+	cfg.rabbitDSN = env.RabbitDSN
+	// SET UP VIPER LATER
 	cfg.postgreDSN = "postgreDSN"
-	cfg.port = 80
 	cfg.gRPCPort = 50051
 
 	log.Println("Starting authentication service")

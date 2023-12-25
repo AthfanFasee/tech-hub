@@ -10,7 +10,7 @@ option go_package = "./users";
 message Empty {}
 
 message User {
-    int32 id = 1;
+    int64 id = 1;
     string email = 2;
     string name = 3;
     bytes password_hash = 4;

@@ -8,7 +8,7 @@ import (
 	"encoding/base32"
 	"time"
 
-	"github.com/AthfanFasee/authentication/validator"
+	"github.com/AthfanFasee/authentication/internal/validator"
 )
 
 const (
@@ -94,6 +94,7 @@ func (t TokenModel) DeleteAllForUser(scope string, userID int64) error {
 	return err
 }
 
+// Validation related.
 func ValidateTokenPlainText(v *validator.Validator, tokenPlainText string) {
 	v.Check(tokenPlainText != "", "token", "must be provided")
 	v.Check(len(tokenPlainText) == 26, "token", "must be 26 bytes long")

@@ -7,4 +7,5 @@ use (
 	./logger-service
 	./mail-service
 	./payment-service
+	./posts-service
 )
