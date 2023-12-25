@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS tokens_userid_idx ON tokens(user_id);

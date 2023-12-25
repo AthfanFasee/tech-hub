@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS tokens_userid_idx;
