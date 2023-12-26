@@ -31,6 +31,7 @@ type jsonRes struct {
 	Message string `json:"message"`
 }
 
+// SEE WHAT THIS IS (MAYBE HEALTHCHECK?)
 func (app *application) broker(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 

@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"path/filepath"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -16,6 +18,7 @@ import (
 	"github.com/AthfanFasee/authentication/internal/data"
 	"github.com/AthfanFasee/authentication/internal/validator"
 	users "github.com/AthfanFasee/authentication/proto"
+	"github.com/dgrijalva/jwt-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
@@ -143,7 +146,7 @@ func (u *UserService) Register(ctx context.Context, req *users.RegisterRequest) 
 
 	data.ValidateUser(v, user)
 
-	err = u.Application.ValidationFailedResponse(v)
+	err = u.Application.checkValidationStatus(v)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +156,7 @@ func (u *UserService) Register(ctx context.Context, req *users.RegisterRequest) 
 		switch {
 		case errors.Is(err, data.ErrDuplicateEmail):
 			v.AddError("email", " email address already exists")
-			err = u.Application.ValidationFailedResponse(v)
+			err = u.Application.checkValidationStatus(v)
 			if err != nil {
 				return nil, err
 			}
@@ -165,7 +168,7 @@ func (u *UserService) Register(ctx context.Context, req *users.RegisterRequest) 
 		}
 	}
 
-	token, err := u.Models.Tokens.New(int64(id), 24*time.Hour, data.ScopeActivation)
+	token, err := u.Application.generateJWTToken(user.ID, user.Name, user.Activated)
 	if err != nil {
 		err := u.Application.ServerErrorResponse(err.Error())
 		if err != nil {
@@ -175,7 +178,7 @@ func (u *UserService) Register(ctx context.Context, req *users.RegisterRequest) 
 
 	// Sends mail to the user via RabbitMQ
 	mailData := map[string]interface{}{
-		"activationToken": token.Plaintext,
+		"activationToken": token,
 		"userID":          id,
 	}
 	err = u.Application.pushToQueue("mail", mailData, "mailUser")
@@ -230,7 +233,23 @@ func (u *UserService) Authenticate(ctx context.Context, req *users.AuthenticateR
 		return nil, status.Errorf(codes.Unauthenticated, "your user account must be activated")
 	}
 
-	token, err := u.Application.Models.Tokens.New(int64(user.ID), 30*24*time.Hour, data.ScopeAuthentication)
+	token, err := u.Application.generateJWTToken(user.ID, user.Name, user.Activated)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &users.AuthenticateResponse{Token: token}
+	return res, nil
+}
+
+// Changes a user's status to activated
+func (u *UserService) Activate(ctx context.Context, req *users.ActivateUserRequest) (*users.RegisterResponse, error) {
+	tokenString := req.GetTokenPlainText()
+
+	// Load the public key
+	keysDir := filepath.Join(".", "keys")
+	publicKeyPath := filepath.Join(keysDir, "private.pem")
+	publicBytes, err := os.ReadFile(publicKeyPath)
 	if err != nil {
 		err := u.Application.ServerErrorResponse(err.Error())
 		if err != nil {
@@ -238,34 +257,50 @@ func (u *UserService) Authenticate(ctx context.Context, req *users.AuthenticateR
 		}
 	}
 
-	tokenResult := &users.Token{
-		Plaintext: token.Plaintext,
-		Hash:      token.Hash,
-		UserId:    token.UserID,
-		Expiry:    timestamppb.New(token.Expiry),
-		Scope:     token.Scope,
-	}
-	res := &users.AuthenticateResponse{Token: tokenResult, UserName: user.Name}
-	return res, nil
-}
-
-// Changes a user's status to activated
-func (u *UserService) Activate(ctx context.Context, req *users.ActivateUserRequest) (*users.RegisterResponse, error) {
-	tokenPlainText := req.GetTokenPlainText()
-
-	v := validator.New()
-	data.ValidateTokenPlainText(v, tokenPlainText)
-	err := u.Application.ValidationFailedResponse(v)
+	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(publicBytes)
 	if err != nil {
-		return nil, err
+		err := u.Application.ServerErrorResponse(err.Error())
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	user, err := u.Application.Models.Users.GetForToken(data.ScopeActivation, tokenPlainText)
+	// Parse the token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			err := u.Application.ServerErrorResponse(err.Error())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// Return the public key for verification
+		return publicKey, nil
+	})
+
+	var claims jwt.MapClaims
+	v := validator.New()
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		log.Printf("Token claims: %v", claims)
+	} else {
+		// token is not valid
+		v.AddError("token", "invalid or expired token")
+		err := u.Application.checkValidationStatus(v)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Access claims as needed
+	userID := claims["user_id"].(int64)
+
+	user, err := u.Application.Models.Users.GetOne(userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
 			v.AddError("token", "invalid or expired token")
-			err = u.Application.ValidationFailedResponse(v)
+			err = u.Application.checkValidationStatus(v)
 			if err != nil {
 				return nil, err
 			}
@@ -295,16 +330,49 @@ func (u *UserService) Activate(ctx context.Context, req *users.ActivateUserReque
 		}
 	}
 
-	err = u.Application.Models.Tokens.DeleteAllForUser(data.ScopeActivation, int64(user.ID))
+	res := &users.RegisterResponse{Message: "user activated successfully"}
+	return res, nil
+}
+
+func (app *application) generateJWTToken(userID int64, name string, activated bool) (string, error) {
+	// Load the private key
+	keysDir := filepath.Join(".", "keys")
+	privateKeyPath := filepath.Join(keysDir, "private.pem")
+	privateBytes, err := os.ReadFile(privateKeyPath)
 	if err != nil {
-		err := u.Application.ServerErrorResponse(err.Error())
+		err := app.ServerErrorResponse(err.Error())
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 	}
 
-	res := &users.RegisterResponse{Message: "user activated successfully"}
-	return res, nil
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateBytes)
+	if err != nil {
+		err := app.ServerErrorResponse(err.Error())
+		if err != nil {
+			return "", err
+		}
+	}
+
+	// Create a new token object
+	tokenObj := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"user_id":        userID,
+		"user_name":      userID,
+		"user_activated": activated,
+		"iat":            time.Now(),
+		"exp":            time.Now().Add(time.Hour * 24 * 30),
+	})
+
+	// Sign and get the complete encoded token as a string using the secret
+	token, err := tokenObj.SignedString(privateKey)
+	if err != nil {
+		err := app.ServerErrorResponse(err.Error())
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return token, nil
 }
 
 // Pushes an event to RabbitMQ

@@ -41,9 +41,6 @@ func main() {
 	cfg.gRPCPort = env.GrpcServerPort
 	cfg.postgreDSN = env.PostgreDSN
 	cfg.rabbitDSN = env.RabbitDSN
-	// SET UP VIPER LATER
-	cfg.postgreDSN = "postgreDSN"
-	cfg.gRPCPort = 50051
 
 	log.Println("Starting authentication service")
 

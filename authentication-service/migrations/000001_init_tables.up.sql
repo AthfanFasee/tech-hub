@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS "users" (
 "password_hash" bytea NOT NULL,
 "bio" text,
 "avatar" text,
-"active" BOOLEAN NOT NULL,
+"activated" BOOLEAN NOT NULL,
 "admin" BOOLEAN NOT NULL,
 "version" integer NOT NULL DEFAULT 1,
 "created_at" timestamp(0) with time zone NOT NULL DEFAULT NOW()

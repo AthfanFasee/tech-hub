@@ -28,15 +28,6 @@ func (app *application) EditConflictResponse(message string) error {
 }
 
 // Validates user input data and returns an gRPC error if validation fails
-func (app *application) ValidationFailedResponse(v *validator.Validator) error {
-	err := app.checkValidationStatus(v)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (app *application) checkValidationStatus(v *validator.Validator) error {
 	if !v.Valid() {
 		var errorMessages []string

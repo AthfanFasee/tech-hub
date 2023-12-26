@@ -181,6 +181,7 @@ func (u *PostsService) CreatePost(ctx context.Context, req *posts.CreatePostRequ
 }
 
 // Update a post
+// CHECK IF THE USER FROM GRPC METADATA IS THE USER CREATED THE POST
 func (u *PostsService) UpdatePost(ctx context.Context, req *posts.UpdatePostRequest) (*posts.GetPostResponse, error) {
 	id := req.GetId()
 	title := req.GetTitle()
