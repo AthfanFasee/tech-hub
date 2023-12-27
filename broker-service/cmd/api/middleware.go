@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/tomasen/realip"
 	"golang.org/x/time/rate"
 )
@@ -123,5 +128,74 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+// Authenticates user and passes user info to next handler
+func (app *application) authenticate(next http.Handler) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Vary", "Authorization")
+
+		authorizationHeader := r.Header.Get("Authorization")
+
+		if authorizationHeader == "" {
+			app.invalidAuthenticationTokenResponse(w, r)
+			return
+		}
+
+		headerParts := strings.Split(authorizationHeader, " ")
+
+		if len(headerParts) != 2 || headerParts[0] != "Bearer" {
+			app.invalidAuthenticationTokenResponse(w, r)
+			return
+		}
+
+		tokenString := headerParts[1]
+
+		// Load the public key
+		keysDir := filepath.Join(".", "keys")
+		publicKeyPath := filepath.Join(keysDir, "public.pem")
+		publicBytes, err := os.ReadFile(publicKeyPath)
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+
+		publicKey, err := jwt.ParseRSAPublicKeyFromPEM(publicBytes)
+		if err != nil {
+			app.serverErrorResponse(w, r, err)
+			return
+		}
+
+		// Parse the token
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+				app.serverErrorResponse(w, r, err)
+			}
+
+			return publicKey, nil
+		})
+
+		var claims jwt.MapClaims
+
+		if claimsMap, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			claims = claimsMap
+		} else {
+			app.invalidAuthenticationTokenResponse(w, r)
+			return
+		}
+
+		userID := claims["user_id"].(int64)
+		userName := claims["user_name"].(string)
+		userActivated := claims["user_activated"].(bool)
+
+		ctx := context.WithValue(r.Context(), "user-id", userID)
+		ctx = context.WithValue(ctx, "user-name", userName)
+		ctx = context.WithValue(ctx, "user-activated", userActivated)
+
+		r = r.WithContext(ctx)
+
+		next.ServeHTTP(w, r)
+
 	})
 }

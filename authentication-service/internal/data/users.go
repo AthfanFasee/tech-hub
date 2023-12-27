@@ -190,7 +190,7 @@ func (u UserModel) Update(user *User) error {
 }
 
 // Deletes one user from the database, by ID
-func (u UserModel) DeleteByID(id int64) error {
+func (u UserModel) Delete(id int64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 

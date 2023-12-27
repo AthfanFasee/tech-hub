@@ -36,7 +36,7 @@ func (app *application) checkValidationStatus(v *validator.Validator) error {
 		}
 
 		combinedErrors := strings.Join(errorMessages, ", ")
-		return status.Errorf(codes.Internal, "Errors: %s", combinedErrors)
+		return status.Errorf(codes.InvalidArgument, "Errors: %s", combinedErrors)
 	}
 
 	return nil

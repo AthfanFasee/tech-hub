@@ -24,19 +24,10 @@ func (app *application) EditConflictResponse(message string) error {
 	if err != nil {
 		log.Printf("error logging via rabbitmq: %v", err.Error())
 	}
-	return status.Errorf(codes.Internal, "unable to update the record due to an edit conflict, please try again")
+	return status.Errorf(codes.AlreadyExists, "unable to update the record due to an edit conflict, please try again")
 }
 
 // Validates user input data and returns an gRPC error if validation fails
-func (app *application) ValidationFailedResponse(v *validator.Validator) error {
-	err := app.checkValidationStatus(v)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (app *application) checkValidationStatus(v *validator.Validator) error {
 	if !v.Valid() {
 		var errorMessages []string
@@ -45,7 +36,7 @@ func (app *application) checkValidationStatus(v *validator.Validator) error {
 		}
 
 		combinedErrors := strings.Join(errorMessages, ", ")
-		return status.Errorf(codes.Internal, "Errors: %s", combinedErrors)
+		return status.Errorf(codes.InvalidArgument, "Errors: %s", combinedErrors)
 	}
 
 	return nil

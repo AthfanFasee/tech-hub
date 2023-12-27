@@ -6,10 +6,21 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
+
+	"github.com/AthfanFasee/broker/event"
+	"github.com/AthfanFasee/broker/internal/validator"
+	"github.com/julienschmidt/httprouter"
 )
 
 type envelope map[string]interface{}
+
+type RabbitPayload struct {
+	Name string `json:"name"`
+	Data string `json:"data"`
+}
 
 // Encode data into JSON
 func (app *application) writeJSON(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
@@ -90,6 +101,68 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 	err = dec.Decode(&struct{}{})
 	if err != io.EOF {
 		return errors.New("body cannot contain more than one JSON value")
+	}
+
+	return nil
+}
+
+// Read ID param from request url
+func (app *application) readIDParam(r *http.Request) (int64, error) {
+	// Retrieve a slice containing req parameter names and values
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
+	if err != nil || id < 1 {
+		return 0, errors.New("invalid id parameter")
+	}
+
+	return id, nil
+}
+
+// Return a string value from query string map or a default value
+func (app *application) readString(queryString url.Values, key string, defaultValue string) string {
+	stringValue := queryString.Get(key)
+
+	// Get() will return empty string if value is'nt found. Then we return default value
+	if stringValue == "" {
+		return defaultValue
+	}
+
+	return stringValue
+}
+
+// Return an int value from query string map or a default value
+func (app *application) readInt(queryString url.Values, key string, defaultValue int, v *validator.Validator) int {
+	stringValue := queryString.Get(key)
+
+	if stringValue == "" {
+		return defaultValue
+	}
+
+	intValue, err := strconv.Atoi(stringValue)
+	if err != nil {
+		v.AddError(key, "must be an integer value")
+		return defaultValue
+	}
+
+	return intValue
+}
+
+func (app *application) pushToQueue(name, message string) error {
+	emitter, err := event.NewEventEmitter(app.Rabbit)
+	if err != nil {
+		return err
+	}
+
+	payload := RabbitPayload{
+		Name: name,
+		Data: message,
+	}
+
+	j, _ := json.MarshalIndent(&payload, "", "\t")
+	err = emitter.Push(string(j), "log.INFO")
+	if err != nil {
+		return err
 	}
 
 	return nil

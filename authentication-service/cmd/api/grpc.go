@@ -104,7 +104,7 @@ func (u *UserService) GetUserByEmail(ctx context.Context, req *users.GetUserByEm
 // Deletes a single user by id
 func (u *UserService) DeleteUser(ctx context.Context, req *users.GetUserRequest) (*users.RegisterResponse, error) {
 	id := req.GetId()
-	err := u.Models.Users.DeleteByID(int64(id))
+	err := u.Models.Users.Delete(int64(id))
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -243,12 +243,12 @@ func (u *UserService) Authenticate(ctx context.Context, req *users.AuthenticateR
 }
 
 // Changes a user's status to activated
-func (u *UserService) Activate(ctx context.Context, req *users.ActivateUserRequest) (*users.RegisterResponse, error) {
+func (u *UserService) Activate(ctx context.Context, req *users.ActivateRequest) (*users.RegisterResponse, error) {
 	tokenString := req.GetTokenPlainText()
 
 	// Load the public key
 	keysDir := filepath.Join(".", "keys")
-	publicKeyPath := filepath.Join(keysDir, "private.pem")
+	publicKeyPath := filepath.Join(keysDir, "public.pem")
 	publicBytes, err := os.ReadFile(publicKeyPath)
 	if err != nil {
 		err := u.Application.ServerErrorResponse(err.Error())
@@ -281,8 +281,8 @@ func (u *UserService) Activate(ctx context.Context, req *users.ActivateUserReque
 	var claims jwt.MapClaims
 	v := validator.New()
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		log.Printf("Token claims: %v", claims)
+	if claimsMap, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		claims = claimsMap
 	} else {
 		// token is not valid
 		v.AddError("token", "invalid or expired token")

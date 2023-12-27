@@ -16,7 +16,7 @@ type Models struct {
 		Insert(user *User) (int, error)
 		GetByEmail(email string) (*User, error)
 		GetOne(id int64) (*User, error)
-		DeleteByID(id int64) error
+		Delete(id int64) error
 		Update(user *User) error
 		ResetPassword(password string, id int64) error
 	}

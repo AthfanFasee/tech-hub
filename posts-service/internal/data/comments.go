@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/AthfanFasee/posts/internal/validator"
@@ -33,7 +34,12 @@ func (c CommentModel) GetAllForPost(postID int64) ([]*Comment, error) {
 
 	rows, err := c.DB.QueryContext(ctx, query, postID)
 	if err != nil {
-		return nil, err
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
 	}
 
 	defer rows.Close()

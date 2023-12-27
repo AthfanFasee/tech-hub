@@ -151,7 +151,7 @@ func (u *PostsService) CreatePost(ctx context.Context, req *posts.CreatePostRequ
 	v := validator.New()
 	data.ValidatePost(v, post)
 
-	err := u.Application.ValidationFailedResponse(v)
+	err := u.Application.checkValidationStatus(v)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +236,7 @@ func (u *PostsService) UpdatePost(ctx context.Context, req *posts.UpdatePostRequ
 
 	data.ValidatePost(v, post)
 
-	err = u.Application.ValidationFailedResponse(v)
+	err = u.Application.checkValidationStatus(v)
 	if err != nil {
 		return nil, err
 	}
@@ -380,9 +380,14 @@ func (u *PostsService) GetCommentsForPost(ctx context.Context, req *posts.GetPos
 
 	result, err := u.Models.Comments.GetAllForPost(id)
 	if err != nil {
-		err := u.Application.ServerErrorResponse(err.Error())
-		if err != nil {
-			return nil, err
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			return nil, status.Errorf(codes.NotFound, "requested resource is not found")
+		default:
+			err := u.Application.ServerErrorResponse(err.Error())
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -423,7 +428,7 @@ func (u *PostsService) CreateComment(ctx context.Context, req *posts.CreateComme
 	v := validator.New()
 	data.ValidateComment(v, comment)
 
-	err := u.Application.ValidationFailedResponse(v)
+	err := u.Application.checkValidationStatus(v)
 	if err != nil {
 		return nil, err
 	}
