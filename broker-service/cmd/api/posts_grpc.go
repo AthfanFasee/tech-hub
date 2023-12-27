@@ -17,6 +17,7 @@ func (app *application) GetPosts(w http.ResponseWriter, r *http.Request, getPost
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetPostsResponse{}
 	}
 
 	defer conn.Close()
@@ -29,8 +30,11 @@ func (app *application) GetPosts(w http.ResponseWriter, r *http.Request, getPost
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
 			app.notFoundResponse(w, r)
+			return &posts.GetPostsResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetPostsResponse{}
 	}
 
 	return result
@@ -41,6 +45,7 @@ func (app *application) GetPost(w http.ResponseWriter, r *http.Request, getPostR
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetPostResponse{}
 	}
 
 	defer conn.Close()
@@ -53,8 +58,11 @@ func (app *application) GetPost(w http.ResponseWriter, r *http.Request, getPostR
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
 			app.notFoundResponse(w, r)
+			return &posts.GetPostResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetPostResponse{}
 	}
 
 	return result
@@ -65,6 +73,7 @@ func (app *application) CreatePost(w http.ResponseWriter, r *http.Request, creat
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetPostResponse{}
 	}
 
 	defer conn.Close()
@@ -77,8 +86,11 @@ func (app *application) CreatePost(w http.ResponseWriter, r *http.Request, creat
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.InvalidArgument {
 			app.validationFailedResponse(w, r, err.Error())
+			return &posts.GetPostResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetPostResponse{}
 	}
 
 	return result
@@ -89,6 +101,7 @@ func (app *application) UpdatePost(w http.ResponseWriter, r *http.Request, updat
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetPostResponse{}
 	}
 
 	defer conn.Close()
@@ -102,12 +115,17 @@ func (app *application) UpdatePost(w http.ResponseWriter, r *http.Request, updat
 		st, ok := status.FromError(err)
 		if ok && st.Code() == codes.NotFound {
 			app.notFoundResponse(w, r)
+			return &posts.GetPostResponse{}
 		} else if ok && st.Code() == codes.InvalidArgument {
 			app.validationFailedResponse(w, r, err.Error())
+			return &posts.GetPostResponse{}
 		} else if ok && st.Code() == codes.AlreadyExists {
 			app.editConflictResponse(w, r)
+			return &posts.GetPostResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetPostResponse{}
 	}
 
 	return result
@@ -118,6 +136,7 @@ func (app *application) DeletePost(w http.ResponseWriter, r *http.Request, getPo
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &posts.DeletePostResponse{}
 	}
 
 	defer conn.Close()
@@ -130,8 +149,11 @@ func (app *application) DeletePost(w http.ResponseWriter, r *http.Request, getPo
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
 			app.notFoundResponse(w, r)
+			return &posts.DeletePostResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &posts.DeletePostResponse{}
 	}
 
 	return result
@@ -142,6 +164,7 @@ func (app *application) LikePost(w http.ResponseWriter, r *http.Request, likePos
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetPostResponse{}
 	}
 
 	defer conn.Close()
@@ -155,10 +178,14 @@ func (app *application) LikePost(w http.ResponseWriter, r *http.Request, likePos
 		st, ok := status.FromError(err)
 		if ok && st.Code() == codes.NotFound {
 			app.notFoundResponse(w, r)
+			return &posts.GetPostResponse{}
 		} else if ok && st.Code() == codes.InvalidArgument {
 			app.badRequestResponse(w, r, err)
+			return &posts.GetPostResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetPostResponse{}
 	}
 
 	return result
@@ -169,6 +196,7 @@ func (app *application) DislikePost(w http.ResponseWriter, r *http.Request, like
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetPostResponse{}
 	}
 
 	defer conn.Close()
@@ -182,10 +210,14 @@ func (app *application) DislikePost(w http.ResponseWriter, r *http.Request, like
 		st, ok := status.FromError(err)
 		if ok && st.Code() == codes.NotFound {
 			app.notFoundResponse(w, r)
+			return &posts.GetPostResponse{}
 		} else if ok && st.Code() == codes.InvalidArgument {
 			app.badRequestResponse(w, r, err)
+			return &posts.GetPostResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetPostResponse{}
 	}
 
 	return result

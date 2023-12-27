@@ -17,6 +17,7 @@ func (app *application) GetCommentsForPost(w http.ResponseWriter, r *http.Reques
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetCommentsForPostResponse{}
 	}
 
 	defer conn.Close()
@@ -29,8 +30,11 @@ func (app *application) GetCommentsForPost(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
 			app.notFoundResponse(w, r)
+			return &posts.GetCommentsForPostResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &posts.GetCommentsForPostResponse{}
 	}
 
 	return result
@@ -41,6 +45,7 @@ func (app *application) CreateComment(w http.ResponseWriter, r *http.Request, cr
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &posts.CreateCommentResponse{}
 	}
 
 	defer conn.Close()
@@ -53,8 +58,11 @@ func (app *application) CreateComment(w http.ResponseWriter, r *http.Request, cr
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.InvalidArgument {
 			app.validationFailedResponse(w, r, err.Error())
+			return &posts.CreateCommentResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &posts.CreateCommentResponse{}
 	}
 
 	return result
@@ -65,6 +73,7 @@ func (app *application) DeleteComment(w http.ResponseWriter, r *http.Request, ge
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &posts.DeletePostResponse{}
 	}
 
 	defer conn.Close()
@@ -77,8 +86,11 @@ func (app *application) DeleteComment(w http.ResponseWriter, r *http.Request, ge
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
 			app.notFoundResponse(w, r)
+			return &posts.DeletePostResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &posts.DeletePostResponse{}
 	}
 
 	return result

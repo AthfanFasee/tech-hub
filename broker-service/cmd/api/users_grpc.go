@@ -17,6 +17,7 @@ func (app *application) Register(w http.ResponseWriter, r *http.Request, registe
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &users.RegisterResponse{}
 	}
 
 	defer conn.Close()
@@ -29,8 +30,11 @@ func (app *application) Register(w http.ResponseWriter, r *http.Request, registe
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.InvalidArgument {
 			app.validationFailedResponse(w, r, err.Error())
+			return &users.RegisterResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &users.RegisterResponse{}
 	}
 
 	return result
@@ -41,6 +45,7 @@ func (app *application) Authenticate(w http.ResponseWriter, r *http.Request, aut
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &users.AuthenticateResponse{}
 	}
 
 	defer conn.Close()
@@ -54,10 +59,14 @@ func (app *application) Authenticate(w http.ResponseWriter, r *http.Request, aut
 		st, ok := status.FromError(err)
 		if ok && st.Code() == codes.Unauthenticated {
 			app.invalidCredentialsResponse(w, r)
+			return &users.AuthenticateResponse{}
 		} else if ok && st.Code() == codes.InvalidArgument {
 			app.validationFailedResponse(w, r, err.Error())
+			return &users.AuthenticateResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &users.AuthenticateResponse{}
 	}
 
 	return result
@@ -68,6 +77,7 @@ func (app *application) Activate(w http.ResponseWriter, r *http.Request, activat
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &users.RegisterResponse{}
 	}
 
 	defer conn.Close()
@@ -80,8 +90,11 @@ func (app *application) Activate(w http.ResponseWriter, r *http.Request, activat
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.InvalidArgument {
 			app.validationFailedResponse(w, r, err.Error())
+			return &users.RegisterResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &users.RegisterResponse{}
 	}
 	return result
 }
@@ -91,6 +104,7 @@ func (app *application) DeleteUser(w http.ResponseWriter, r *http.Request, getUs
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
+		return &users.RegisterResponse{}
 	}
 
 	defer conn.Close()
@@ -103,8 +117,11 @@ func (app *application) DeleteUser(w http.ResponseWriter, r *http.Request, getUs
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
 			app.notFoundResponse(w, r)
+			return &users.RegisterResponse{}
 		}
+
 		app.serverErrorResponse(w, r, err)
+		return &users.RegisterResponse{}
 	}
 
 	// BEFORE RETURNING PUSH event to delete this user's posts
