@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/AthfanFasee/payment/internal/models"
+	"github.com/AthfanFasee/payment/internal/data"
 	"github.com/AthfanFasee/payment/utils"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -30,8 +30,8 @@ type application struct {
 	config   config
 	infoLog  *log.Logger
 	errorLog *log.Logger
-	version  string
-	DB       models.DBModel
+	DB       *sql.DB
+	Models   data.Models
 }
 
 func (app *application) serve() error {
@@ -71,18 +71,18 @@ func main() {
 
 	flag.Parse()
 
-	conn, err := OpenDB(cfg.mysqlDSN)
+	db, err := OpenDB(cfg.mysqlDSN)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer conn.Close()
+	defer db.Close()
 
 	app := &application{
 		config:   cfg,
-		version:  version,
 		infoLog:  infoLog,
 		errorLog: errorLog,
-		DB:       models.DBModel{DB: conn},
+		DB:       db,
+		Models:   data.NewModels(db),
 	}
 
 	err = app.serve()

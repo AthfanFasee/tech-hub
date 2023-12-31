@@ -1,4 +1,4 @@
-package models
+package data
 
 import (
 	"context"
@@ -6,21 +6,8 @@ import (
 	"time"
 )
 
-// DBModel is the type for database connection values
-type DBModel struct {
+type PaymentModel struct {
 	DB *sql.DB
-}
-
-// Models is the wrapper for all models
-type Models struct {
-	DB DBModel
-}
-
-// NewModels returns a model type with database connection pool
-func NewModels(db *sql.DB) Models {
-	return Models{
-		DB: DBModel{DB: db},
-	}
 }
 
 // TransactionStatus is the type for transaction statuses
@@ -65,7 +52,7 @@ type Order struct {
 	Amount        int  `json:"amount"`
 }
 
-func (m *DBModel) InsertTransaction(transaction Transaction) (int, error) {
+func (p PaymentModel) InsertTransaction(transaction Transaction) (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -75,7 +62,7 @@ func (m *DBModel) InsertTransaction(transaction Transaction) (int, error) {
 
 	args := []interface{}{transaction.Amount, transaction.Currency, transaction.LastFour, transaction.BankReturnCode, transaction.ExpiryMonth, transaction.ExpiryYear, transaction.PaymentIntent, transaction.PaymentMethod, transaction.TransactionStatusID}
 
-	result, err := m.DB.ExecContext(ctx, query, args...)
+	result, err := p.DB.ExecContext(ctx, query, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -89,14 +76,14 @@ func (m *DBModel) InsertTransaction(transaction Transaction) (int, error) {
 }
 
 // InsertOrder inserts a new order, and returns its id
-func (m *DBModel) InsertOrder(order Order) (int, error) {
+func (p PaymentModel) InsertOrder(order Order) (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	stmt := `INSERT INTO orders (transaction_id, status_id, customer_id, is_recurring, amount)
 		VALUES (?, ?, ?, ?, ?)`
 
-	result, err := m.DB.ExecContext(ctx, stmt,
+	result, err := p.DB.ExecContext(ctx, stmt,
 		order.TransactionID,
 		order.StatusID,
 		order.CustomerID,
@@ -116,17 +103,17 @@ func (m *DBModel) InsertOrder(order Order) (int, error) {
 }
 
 // InsertOrder inserts a new order, and returns its id
-func (m *DBModel) InsertCustomer(c Customer) (int, error) {
+func (p PaymentModel) InsertCustomer(customer Customer) (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	stmt := `INSERT INTO customers (first_name, last_name, email, created_at, updated_at)
 		values (?, ?, ?)`
 
-	result, err := m.DB.ExecContext(ctx, stmt,
-		c.FirstName,
-		c.LastName,
-		c.Email,
+	result, err := p.DB.ExecContext(ctx, stmt,
+		customer.FirstName,
+		customer.LastName,
+		customer.Email,
 	)
 	if err != nil {
 		return 0, err
@@ -140,13 +127,13 @@ func (m *DBModel) InsertCustomer(c Customer) (int, error) {
 	return int(id), nil
 }
 
-func (m *DBModel) UpdateOrderStatus(id, statusID int) error {
+func (p PaymentModel) UpdateOrderStatus(id, statusID int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	stmt := `UPDATE orders set status_id = ? WHERE id = ?`
 
-	_, err := m.DB.ExecContext(ctx, stmt, statusID, id)
+	_, err := p.DB.ExecContext(ctx, stmt, statusID, id)
 	if err != nil {
 		return err
 	}

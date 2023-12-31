@@ -98,6 +98,22 @@ services:
     volumes: 
       - ./db-data/postgres/auth/:/var/lib/postgresql/data/
   
+  payment-db:
+    image: 'mysql:8.0'
+    ports:
+      - "3306:3306"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: posts
+      MYSQL_USER: root
+      MYSQL_PASSWORD: secret
+    volumes: 
+      - ./db-data/mysql/payment/:/var/lib/payment/
+
   posts-db:
     image: 'postgres:12-alpine'
     ports:

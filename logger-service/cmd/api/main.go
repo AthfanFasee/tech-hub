@@ -2,30 +2,44 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"net/http"
+	"os"
 	"time"
 
 	"github.com/AthfanFasee/logger-service/data"
+	"github.com/AthfanFasee/logger-service/utils"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const (
-	PORT     = "80"
-	mongoURL = "mongodb://mongo:27017"
-	gRpcPORT = "50051"
-)
-
 var client *mongo.Client
+
+type config struct {
+	gRPCPort int
+	mongoURL string
+}
 
 type application struct {
 	Models data.Models
+	config config
 }
 
 func main() {
-	mongoClient, err := connectToMongo()
+	var cfg config
+
+	// Set up configs from env file
+	env, err := utils.LoadEnv()
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+
+	cfg.gRPCPort = env.GrpcServerPort
+	cfg.mongoURL = env.MongoURL
+
+	log.Println("Starting logger service")
+
+	mongoClient, err := connectToMongo(cfg.mongoURL)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -46,19 +60,8 @@ func main() {
 		Models: data.New(client),
 	}
 
-	go app.gRPCListen()
-
-	// Start server
-	log.Println("Starting service on port", PORT)
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", PORT),
-		Handler: app.routes(),
-	}
-
-	err = srv.ListenAndServe()
-	if err != nil {
-		log.Panic()
-	}
+	// Start gRPC server
+	app.gRPCListen()
 }
 
 // func (app *application) serve() {
@@ -73,7 +76,7 @@ func main() {
 // 	}
 // }
 
-func connectToMongo() (*mongo.Client, error) {
+func connectToMongo(mongoURL string) (*mongo.Client, error) {
 	// Connection options
 	clientOptions := options.Client().ApplyURI(mongoURL)
 	// Make these come from env variable in prod

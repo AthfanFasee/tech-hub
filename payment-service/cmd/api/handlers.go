@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/AthfanFasee/payment/internal/cards"
-	"github.com/AthfanFasee/payment/internal/models"
+	"github.com/AthfanFasee/payment/internal/data"
 	"github.com/stripe/stripe-go/v72"
 )
 
@@ -61,26 +61,26 @@ func (app *application) getPaymentIntent(w http.ResponseWriter, r *http.Request)
 
 // Create a customer and subscribe to plan
 func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, r *http.Request) {
-	var data stripePayload
-	err := json.NewDecoder(r.Body).Decode(&data)
+	var stripeData stripePayload
+	err := json.NewDecoder(r.Body).Decode(&stripeData)
 	if err != nil {
 		app.errorLog.Println(err)
 		return
 	}
 
-	app.infoLog.Println(data.Email, data.LastFour, data.PaymentMethod, data.Plan)
+	app.infoLog.Println(stripeData.Email, stripeData.LastFour, stripeData.PaymentMethod, stripeData.Plan)
 
 	card := cards.Card{
 		Secret:   app.config.stripe.secret,
 		Key:      app.config.stripe.key,
-		Currency: data.Currency,
+		Currency: stripeData.Currency,
 	}
 
 	okay := true
 	var subscription *stripe.Subscription
 	txnMsg := "Transaction successful"
 
-	stripeCustomer, msg, err := card.CreateCustomer(data.PaymentMethod, data.Email)
+	stripeCustomer, msg, err := card.CreateCustomer(stripeData.PaymentMethod, stripeData.Email)
 	if err != nil {
 		app.errorLog.Println(err)
 		okay = false
@@ -88,7 +88,7 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 	}
 
 	if okay {
-		subscription, err = card.SubscribeToPlan(stripeCustomer, data.Plan, data.Email, data.LastFour, "")
+		subscription, err = card.SubscribeToPlan(stripeCustomer, stripeData.Plan, stripeData.Email, stripeData.LastFour, "")
 		if err != nil {
 			app.errorLog.Println(err)
 			okay = false
@@ -98,29 +98,29 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 	}
 
 	if okay {
-		customerID, err := app.SaveCustomer(data.FirstName, data.LastName, data.Email)
+		customerID, err := app.SaveCustomer(stripeData.FirstName, stripeData.LastName, stripeData.Email)
 		if err != nil {
 			app.errorLog.Println(err)
 			return
 		}
 
 		// Create a new transaction
-		amount, err := strconv.Atoi(data.Amount)
+		amount, err := strconv.Atoi(stripeData.Amount)
 		if err != nil {
 			app.errorLog.Println(err)
 			return
 		}
 
-		txn := models.Transaction{
+		txn := data.Transaction{
 			Amount:              amount,
-			Currency:            data.Currency,
-			LastFour:            data.LastFour,
-			ExpiryMonth:         data.ExpiryMonth,
-			ExpiryYear:          data.ExpiryYear,
+			Currency:            stripeData.Currency,
+			LastFour:            stripeData.LastFour,
+			ExpiryMonth:         stripeData.ExpiryMonth,
+			ExpiryYear:          stripeData.ExpiryYear,
 			TransactionStatusID: 2,
 			// consider renaming payment intent to subsriptionId or smtng
 			PaymentIntent: subscription.ID,
-			PaymentMethod: data.PaymentMethod,
+			PaymentMethod: stripeData.PaymentMethod,
 		}
 
 		txnID, err := app.SaveTransaction(txn)
@@ -130,10 +130,10 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 		}
 
 		// create order
-		order := models.Order{
+		order := data.Order{
 			TransactionID: txnID,
 			CustomerID:    customerID,
-			IsRecurring:   data.IsRecurring,
+			IsRecurring:   stripeData.IsRecurring,
 			StatusID:      1,
 			Amount:        amount,
 		}
@@ -155,13 +155,13 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 
 // SaveCustomer saves a customer and returns id
 func (app *application) SaveCustomer(firstName, lastName, email string) (int, error) {
-	customer := models.Customer{
+	customer := data.Customer{
 		FirstName: firstName,
 		LastName:  lastName,
 		Email:     email,
 	}
 
-	id, err := app.DB.InsertCustomer(customer)
+	id, err := app.Models.Payment.InsertCustomer(customer)
 	if err != nil {
 		return 0, err
 	}
@@ -169,8 +169,8 @@ func (app *application) SaveCustomer(firstName, lastName, email string) (int, er
 }
 
 // SaveTransaction saves a txn and returns id
-func (app *application) SaveTransaction(txn models.Transaction) (int, error) {
-	id, err := app.DB.InsertTransaction(txn)
+func (app *application) SaveTransaction(txn data.Transaction) (int, error) {
+	id, err := app.Models.Payment.InsertTransaction(txn)
 	if err != nil {
 		return 0, err
 	}
@@ -178,8 +178,8 @@ func (app *application) SaveTransaction(txn models.Transaction) (int, error) {
 }
 
 // SaveOrder saves a order and returns id
-func (app *application) SaveOrder(order models.Order) (int, error) {
-	id, err := app.DB.InsertOrder(order)
+func (app *application) SaveOrder(order data.Order) (int, error) {
+	id, err := app.Models.Payment.InsertOrder(order)
 	if err != nil {
 		return 0, err
 	}
@@ -215,7 +215,7 @@ func (app *application) RefundCharge(w http.ResponseWriter, r *http.Request) {
 
 	// Update refund status in the DB
 
-	err = app.DB.UpdateOrderStatus(chargeToRefund.Id, 2)
+	err = app.Models.Payment.UpdateOrderStatus(chargeToRefund.Id, 2)
 	if err != nil {
 		// make error so refund is success but only db could not update
 		app.errorLog.Println(err)
@@ -254,7 +254,7 @@ func (app *application) CancelSubscription(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err = app.DB.UpdateOrderStatus(subToCancel.ID, 3)
+	err = app.Models.Payment.UpdateOrderStatus(subToCancel.ID, 3)
 	if err != nil {
 		// make error so subscription is cancelled but only db could not update
 		app.errorLog.Println(err)
