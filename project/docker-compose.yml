@@ -72,7 +72,7 @@ services:
       MAIL_ENCRYPTION: none
       MAIL_USERNAME: ""
       MAIL_PASSWORD: ""
-      FROM_NAME: "Athfan Fasee"
+      FROM_NAME: "AthfanFasee"
       FROM_ADDRESS: athfan@example.com
   
   listener-service:
