@@ -124,6 +124,5 @@ func (app *application) DeleteUser(w http.ResponseWriter, r *http.Request, getUs
 		return &users.RegisterResponse{}
 	}
 
-	// BEFORE RETURNING PUSH event to delete this user's posts
 	return result
 }

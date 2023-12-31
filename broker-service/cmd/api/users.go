@@ -102,6 +102,9 @@ func (app *application) deleteUserHandler(w http.ResponseWriter, r *http.Request
 
 	result := app.DeleteUser(w, r, getUserRequestData)
 
+	// Before sending a response push an event to delete this user's posts
+	app.pushToQueue("deletePost", getUserRequestData.Id, "posts")
+
 	err = app.writeJSON(w, http.StatusOK, envelope{"message": result.Message}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)

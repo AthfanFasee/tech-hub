@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -131,7 +130,7 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 	})
 }
 
-// Authenticates user and passes user info to next handler
+// Authenticates user and passes user info to req context
 func (app *application) authenticate(next http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Vary", "Authorization")
@@ -139,7 +138,8 @@ func (app *application) authenticate(next http.Handler) http.HandlerFunc {
 		authorizationHeader := r.Header.Get("Authorization")
 
 		if authorizationHeader == "" {
-			app.invalidAuthenticationTokenResponse(w, r)
+			r = app.contextSetUserInfo(r, 0, "", false, false)
+			next.ServeHTTP(w, r)
 			return
 		}
 
@@ -189,13 +189,39 @@ func (app *application) authenticate(next http.Handler) http.HandlerFunc {
 		userName := claims["user_name"].(string)
 		userActivated := claims["user_activated"].(bool)
 
-		ctx := context.WithValue(r.Context(), "user-id", userID)
-		ctx = context.WithValue(ctx, "user-name", userName)
-		ctx = context.WithValue(ctx, "user-activated", userActivated)
-
-		r = r.WithContext(ctx)
+		r = app.contextSetUserInfo(r, userID, userName, userActivated, true)
 
 		next.ServeHTTP(w, r)
 
 	})
+}
+
+// Checks that a user authenticated.
+func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userAuthenticated := app.contextGetUserAuthenticatedStatus(r)
+
+		if !userAuthenticated {
+			app.authenticationRequiredResponse(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// Checks that a user is both authenticated and activated.
+func (app *application) requireActivatedUser(next http.HandlerFunc) http.HandlerFunc {
+	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _, userActivated := app.contextGetUserInfo(r)
+
+		if !userActivated {
+			app.inactiveAccountResponse(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+
+	return app.requireAuthenticatedUser(fn)
 }

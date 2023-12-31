@@ -22,6 +22,7 @@ type Models struct {
 		Insert(post *Post) error
 		Update(post *Post) error
 		Delete(id int64) error
+		DeleteForUser(userID int64) error
 		AddLike(post *Post, userID int64) error
 		RemoveLike(post *Post, userID int64) error
 	}

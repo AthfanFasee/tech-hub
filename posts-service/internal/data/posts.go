@@ -208,6 +208,35 @@ func (p PostModel) Delete(id int64) error {
 	return nil
 }
 
+func (p PostModel) DeleteForUser(userID int64) error {
+	if userID < 1 {
+		return ErrRecordNotFound
+	}
+
+	query := `
+	DELETE FROM posts
+	WHERE user_id = $1`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := p.DB.ExecContext(ctx, query, userID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+
+	return nil
+}
+
 func (p PostModel) AddLike(post *Post, userID int64) error {
 	// This SQL statement will prevent a user from liking a post twice
 	query := `

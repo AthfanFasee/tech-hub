@@ -11,20 +11,20 @@ import (
 
 // Retrieves and returns posts based on query parameters
 func (app *application) showPostsHandler(w http.ResponseWriter, r *http.Request) {
-	var getPostsRequestData *posts.GetPostsRequest
+	var getPostsRequestData *posts.Empty
 
 	// Get the url.Values map containing the query string data.
 	queryString := r.URL.Query()
 
 	v := validator.New()
 
-	getPostsRequestData.Sort = app.readString(queryString, "sort", "-id")
-	getPostsRequestData.Title = app.readString(queryString, "title", "")
-	getPostsRequestData.Page = int32(app.readInt(queryString, "page", 1, v))
-	getPostsRequestData.UserId = int64(app.readInt(queryString, "id", 0, v))
-	getPostsRequestData.Limit = int32(app.readInt(queryString, "limit", 6, v))
+	sort := app.readString(queryString, "sort", "-id")
+	title := app.readString(queryString, "title", "")
+	page := app.readInt(queryString, "page", 1, v)
+	limit := app.readInt(queryString, "limit", 6, v)
+	userID := int64(app.readInt(queryString, "id", 0, v))
 
-	result := app.GetPosts(w, r, getPostsRequestData)
+	result := app.GetPosts(w, r, getPostsRequestData, sort, title, page, userID, limit)
 
 	err := app.writeJSON(w, http.StatusOK, envelope{"posts": result.Posts, "metadata": result.MetaData}, nil)
 	if err != nil {
@@ -69,6 +69,21 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 		app.serverErrorResponse(w, r, err)
 		return
 	}
+
+	// Get user info from request context
+	userID, ok := r.Context().Value("user-id").(int64)
+	if !ok {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+	userName, ok := r.Context().Value("user-name").(string)
+	if !ok {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	creatPostRequestData.UserId = userID
+	creatPostRequestData.UserName = userName
 
 	result := app.CreatePost(w, r, creatPostRequestData)
 

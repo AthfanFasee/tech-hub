@@ -37,7 +37,7 @@ func (e *Emitter) Push(event, key string) error {
 
 	err = channel.PublishWithContext(
 		ctx,
-		"logs_topic",
+		"tech_hub",
 		key,
 		false,
 		false,

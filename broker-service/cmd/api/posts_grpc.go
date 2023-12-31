@@ -3,17 +3,19 @@ package main
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/AthfanFasee/broker/proto/posts"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
 // Makes a gRPC call to retrieve posts from the posts service
-func (app *application) GetPosts(w http.ResponseWriter, r *http.Request, getPostsRequestData *posts.GetPostsRequest) *posts.GetPostsResponse {
+func (app *application) GetPosts(w http.ResponseWriter, r *http.Request, getPostsRequestData *posts.Empty, sort string, title string, page int, userID int64, limit int) *posts.GetPostsResponse {
 	conn, err := grpc.Dial("posts-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -25,8 +27,17 @@ func (app *application) GetPosts(w http.ResponseWriter, r *http.Request, getPost
 	c := posts.NewPostsServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
+	// Send query data as gRPC meta data
+	header := metadata.New(map[string]string{
+		"sort":    sort,
+		"title":   title,
+		"user-id": strconv.FormatInt(userID, 10),
+		"page":    strconv.Itoa(page),
+		"limit":   strconv.Itoa(limit),
+	})
+	grpcCtx := metadata.NewOutgoingContext(ctx, header)
 
-	result, err := c.GetPosts(ctx, getPostsRequestData)
+	result, err := c.GetPosts(grpcCtx, getPostsRequestData)
 	if err != nil {
 		if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
 			app.notFoundResponse(w, r)
@@ -107,6 +118,7 @@ func (app *application) UpdatePost(w http.ResponseWriter, r *http.Request, updat
 	defer conn.Close()
 
 	c := posts.NewPostsServiceClient(conn)
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 

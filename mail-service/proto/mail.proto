@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package mail;
+
+option go_package = "./mail";
+
+message SendWelcomeMailRequest {
+    string From = 1;
+    string To = 2;
+    string Subject = 3;
+    string message = 4;
+}
+
+message SendWelcomeMailResponse {
+    string message = 1;
+}
+
+
+
+service MailService {
+    rpc SendWelcomeMail(SendWelcomeMailRequest) returns (SendWelcomeMailResponse);
+}

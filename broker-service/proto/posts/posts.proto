@@ -34,13 +34,7 @@ message Metadata {
     int32 total_records = 5;
 }
 
-message GetPostsRequest {
-    int64 user_id = 1;
-    int32 page = 2;
-    int32 limit = 3;
-    string sort = 4;
-    string title = 5;
-}
+message Empty {}
 
 message GetPostsResponse {
     repeated Post posts = 1;
@@ -96,7 +90,7 @@ message CreateCommentResponse {
 }
 
 service PostsService {
-    rpc GetPosts(GetPostsRequest) returns (GetPostsResponse);
+    rpc GetPosts(Empty) returns (GetPostsResponse);
     rpc GetPost(GetPostRequest) returns (GetPostResponse);
     rpc CreatePost(CreatePostRequest) returns (GetPostResponse);
     rpc UpdatePost(UpdatePostRequest) returns (GetPostResponse);

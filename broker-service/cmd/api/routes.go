@@ -19,26 +19,27 @@ func (app *application) routes() http.Handler {
 	// Application routes
 	// router.HandlerFunc(http.MethodGet, "/api/v1/healthcheck", app.healthCheckHandler)
 	router.Handler(http.MethodGet, "/debug/vars", expvar.Handler())
+	router.HandlerFunc(http.MethodGet, "/api/v1/healthcheck", app.healthCheckHandler)
 
 	// Post routes
 	router.HandlerFunc(http.MethodGet, "/api/v1/posts", app.showPostsHandler)
 	router.HandlerFunc(http.MethodGet, "/api/v1/post/:id", app.showSinglePostHandler)
-	router.HandlerFunc(http.MethodPost, "/api/v1/post", app.authenticate(http.HandlerFunc(app.createPostHandler)))
-	router.HandlerFunc(http.MethodPatch, "/api/v1/post/:id", app.authenticate(http.HandlerFunc(app.updatePostHandler)))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/post/:id", app.authenticate(http.HandlerFunc(app.deletePostHandler)))
-	router.HandlerFunc(http.MethodPatch, "/api/v1/posts/like/:id", app.authenticate(http.HandlerFunc(app.likePostHandler)))
-	router.HandlerFunc(http.MethodPatch, "/api/v1/posts/dislike/:id", app.authenticate(http.HandlerFunc(app.dislikePostHandler)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/post", app.requireActivatedUser(app.createPostHandler))
+	router.HandlerFunc(http.MethodPatch, "/api/v1/post/:id", app.requireActivatedUser(app.updatePostHandler))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/post/:id", app.requireActivatedUser(app.deletePostHandler))
+	router.HandlerFunc(http.MethodPatch, "/api/v1/posts/like/:id", app.requireActivatedUser(app.likePostHandler))
+	router.HandlerFunc(http.MethodPatch, "/api/v1/posts/dislike/:id", app.requireActivatedUser(app.dislikePostHandler))
 
 	// Comment routes
 	router.HandlerFunc(http.MethodGet, "/api/v1/posts/comments/:id", app.showCommentsForPostHandler)
-	router.HandlerFunc(http.MethodPost, "/api/v1/posts/comment", app.authenticate(http.HandlerFunc(app.createCommentHandler)))
-	router.HandlerFunc(http.MethodDelete, "/api/v1/posts/comment/:id", app.authenticate(http.HandlerFunc(app.deleteCommentHandler)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/posts/comment", app.requireActivatedUser(app.createCommentHandler))
+	router.HandlerFunc(http.MethodDelete, "/api/v1/posts/comment/:id", app.requireActivatedUser(app.deleteCommentHandler))
 
 	// Authentication routes
 	router.HandlerFunc(http.MethodPost, "/api/v1/auth/register", app.registerUserHandler)
 	router.HandlerFunc(http.MethodPut, "/api/v1/auth/activate", app.activateUserHandler)
 	router.HandlerFunc(http.MethodPost, "/api/v1/auth/login", app.authenticateUserHandler)
-	router.HandlerFunc(http.MethodPost, "/api/v1/auth/delete", app.authenticate(http.HandlerFunc(app.deleteUserHandler)))
+	router.HandlerFunc(http.MethodPost, "/api/v1/auth/delete", app.requireActivatedUser(app.deleteUserHandler))
 
-	return app.recoverPanic(app.secureHeaders(app.enableCORS(app.rateLimit(router))))
+	return app.recoverPanic(app.secureHeaders(app.enableCORS(app.rateLimit(app.authenticate(router)))))
 }

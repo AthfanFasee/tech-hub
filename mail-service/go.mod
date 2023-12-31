@@ -1,4 +1,4 @@
-module github.com/AthfanFasee/mail-service
+module github.com/AthfanFasee/mail
 
 go 1.21.1
 

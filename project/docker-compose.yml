@@ -42,7 +42,20 @@ services:
       mode: replicated
       replicas: 1
     environment:
-      DSN: "host=postgres port=5432 user=root password=secret dbname=blogpost sslmode=disable timezone=UTC connect_timeout=5"
+      DSN: "host=authentication-db port=5432 user=root password=secret dbname=auth sslmode=disable timezone=UTC connect_timeout=5"
+  
+  posts-service:
+    build:
+      context: ./../posts-service
+      dockerfile: ./../posts-service/posts-service.dockerfile
+    restart: always
+    ports:
+      - "8081:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      DSN: "host=posts-db port=542 user=root password=secret dbname=posts sslmode=disable timezone=UTC connect_timeout=5"
 
   mailer-service:
     build:
@@ -70,7 +83,22 @@ services:
       mode: replicated
       replicas: 1
 
-  postgres:
+  authentication-db:
+    image: 'postgres:12-alpine'
+    ports:
+      - "5432:5432"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: auth
+    volumes: 
+      - ./db-data/postgres/auth/:/var/lib/postgresql/data/
+  
+  posts-db:
     image: 'postgres:12-alpine'
     ports:
       - "542:5432"
@@ -81,9 +109,9 @@ services:
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: secret
-      POSTGRES_DB: users
+      POSTGRES_DB: posts
     volumes: 
-      - ./db-data/postgres/:/var/lib/postgresql/data/
+      - ./db-data/postgres/posts/:/var/lib/postgresql/data/
   
   mongo:
     image: 'mongo:4.2.24-bionic'

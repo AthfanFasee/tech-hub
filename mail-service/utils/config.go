@@ -5,9 +5,15 @@ import (
 )
 
 type Config struct {
-	GrpcServerPort int    `mapstructure:"SERVER_PORT"`
-	PostgreDSN     string `mapstructure:"POSTGRESQL_DSN"`
-	RabbitDSN      string `mapstructure:"RABBITMQ_DSN"`
+	Domain         string `mapstructure:"MAILER_DOMAIN"`
+	Host           string `mapstructure:"MAILER_HOST"`
+	Port           string `mapstructure:"MAILER_PORT"`
+	Username       string `mapstructure:"MAILER_USER_NAME"`
+	Password       string `mapstructure:"MAILER_PASSWORD"`
+	Encryption     string `mapstructure:"MAILER_ENCRYPTION"`
+	FromName       string `mapstructure:"MAILER_FROM_NAME"`
+	FromAddress    string `mapstructure:"MAILER_FROM_ADDRESS"`
+	GrpcServerPort int    `mapstructure:"GRPC_SERVER_PORT"`
 }
 
 var (

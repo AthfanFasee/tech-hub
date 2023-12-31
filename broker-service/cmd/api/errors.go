@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// Logs error to stdout
 func (app *application) logError(r *http.Request, err error) {
 	logMessage := fmt.Sprintf("Error: %v, request_method: %s, request_url: %s",
 		err, r.Method, r.URL.String())
@@ -16,7 +17,7 @@ func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, st
 	env := envelope{"error": message}
 
 	err := app.writeJSON(w, status, env, nil)
-	// Incase we cannot write a JSON err response, we will log the err and send the user a 500 err code by default
+	// Incase of not able to write a JSON err response, log the err and send the user a 500 err code by default
 	if err != nil {
 		app.logError(r, err)
 		w.WriteHeader(500)
@@ -25,6 +26,7 @@ func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, st
 
 func (app *application) serverErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.logError(r, err)
+	app.logViaRabbit("error", err.Error(), "log.ERROR")
 
 	message := "the server encountered a problem and could not process your request"
 	app.errorResponse(w, r, http.StatusInternalServerError, message)
@@ -64,7 +66,7 @@ func (app *application) invalidCredentialsResponse(w http.ResponseWriter, r *htt
 }
 
 func (app *application) invalidAuthenticationTokenResponse(w http.ResponseWriter, r *http.Request) {
-	// Inform client that we expect them to authenticate using a bearer token
+	// Inform client that they are expected to authenticate using a bearer token
 	w.Header().Set("WWWW-Authenticate", "Bearer")
 
 	message := "authentication token is invalid or missing"

@@ -1,49 +1,75 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
+
+	util "github.com/AthfanFasee/mail/utils"
 )
 
 const PORT = "80"
 
+type config struct {
+	mail struct {
+		Domain      string
+		Host        string
+		Port        string
+		Username    string
+		Password    string
+		Encryption  string
+		FromName    string
+		FromAddress string
+	}
+	gRPCPort int
+}
+
 type application struct {
+	config config
 	Mailer Mail
 }
 
 func main() {
-	app := application{
-		Mailer: createMail(),
-	}
+	var cfg config
 
-	log.Println("Starting main service on port", PORT)
-
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", PORT),
-		Handler: app.routes(),
-	}
-
-	err := srv.ListenAndServe()
+	// Set up configs from env file
+	env, err := util.LoadEnv()
 	if err != nil {
-		log.Panic(err)
+		log.Println(err)
+		os.Exit(1)
 	}
+
+	cfg.mail.Domain = env.Domain
+	cfg.mail.Host = env.Host
+	cfg.mail.Port = env.Port
+	cfg.mail.Username = env.Username
+	cfg.mail.Password = env.Password
+	cfg.mail.Encryption = env.Encryption
+	cfg.mail.FromName = env.FromName
+	cfg.mail.FromAddress = env.FromAddress
+	cfg.gRPCPort = env.GrpcServerPort
+
+	app := application{
+		Mailer: createMail(cfg),
+	}
+
+	log.Println("Starting authentication service")
+
+	app.gRPCListen()
 
 }
 
-func createMail() Mail {
-	port, _ := strconv.Atoi(os.Getenv("MAIL_PORT"))
+func createMail(cfg config) Mail {
+	port, _ := strconv.Atoi(cfg.mail.Port)
 	m := Mail{
-		Domain:      os.Getenv("MAIL_DOMAIN"),
-		Host:        os.Getenv("MAIL_HOST"),
+		Domain:      cfg.mail.Domain,
+		Host:        cfg.mail.Host,
 		Port:        port,
-		Username:    os.Getenv("MAIL_USERNAME"),
-		Password:    os.Getenv("MAIL_PASSWORD"),
-		Encryption:  os.Getenv("MAIL_ENCRYPTION"),
-		FromName:    os.Getenv("MAIL_NAME"),
-		FromAddress: os.Getenv("MAIL_ADDRESS"),
+		Username:    cfg.mail.Username,
+		Password:    cfg.mail.Password,
+		Encryption:  cfg.mail.Encryption,
+		FromName:    cfg.mail.FromName,
+		FromAddress: cfg.mail.FromAddress,
 	}
 
 	return m

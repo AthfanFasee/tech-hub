@@ -1,13 +1,14 @@
-package util
+package utils
 
 import (
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	GrpcServerPort int    `mapstructure:"SERVER_PORT"`
-	PostgreDSN     string `mapstructure:"POSTGRESQL_DSN"`
-	RabbitDSN      string `mapstructure:"RABBITMQ_DSN"`
+	Port         int    `mapstructure:"PORT"`
+	MysqlDSN     string `mapstructure:"MYSQL_DSN"`
+	StripeSecret string `mapstructure:"STRIPE_SECRET"`
+	StripeKey    string `mapstructure:"STRIPE_KEY"`
 }
 
 var (

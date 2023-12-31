@@ -1,8 +1,10 @@
-module github.com/AthfanFasee/payment-service
+module github.com/AthfanFasee/payment
 
 go 1.21.1
 
 require github.com/go-chi/chi/v5 v5.0.10
+
+require github.com/rabbitmq/amqp091-go v1.9.0 // indirect
 
 require (
 	github.com/go-sql-driver/mysql v1.7.1 // indirect

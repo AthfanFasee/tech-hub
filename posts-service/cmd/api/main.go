@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/AthfanFasee/posts/internal/data"
-	"github.com/AthfanFasee/posts/util"
+	"github.com/AthfanFasee/posts/utils"
 	_ "github.com/lib/pq"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -32,7 +32,7 @@ func main() {
 	var cfg config
 
 	// Set up configs from env file
-	env, err := util.LoadEnv()
+	env, err := utils.LoadEnv()
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)

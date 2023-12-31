@@ -3,16 +3,14 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net"
-	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/AthfanFasee/broker/event"
 	"github.com/AthfanFasee/posts/internal/data"
 	"github.com/AthfanFasee/posts/internal/validator"
 	posts "github.com/AthfanFasee/posts/proto"
@@ -20,6 +18,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -37,17 +36,38 @@ type RabbitPayload struct {
 }
 
 // Gets all the posts
-func (u *PostsService) GetPosts(ctx context.Context, req *posts.GetPostsRequest) (*posts.GetPostsResponse, error) {
-	userID := req.GetUserId()
-	page := req.GetPage()
-	limit := req.GetLimit()
-	sort := req.GetSort()
-	title := req.GetTitle()
+func (u *PostsService) GetPosts(ctx context.Context, req *posts.Empty) (*posts.GetPostsResponse, error) {
+
+	// Get filter values from gRPC meta data
+	var userID string
+	var page string
+	var limit string
+	var sort string
+	var title string
+
+	AssignMetadataValue(ctx, "user-id", &userID)
+	AssignMetadataValue(ctx, "page", &userID)
+	AssignMetadataValue(ctx, "limit", &userID)
+	AssignMetadataValue(ctx, "sort", &userID)
+	AssignMetadataValue(ctx, "title", &userID)
+
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Invalid user ID: "+userID)
+	}
+	pageInt, err := strconv.Atoi(userID)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Invalid page value "+page)
+	}
+	limitInt, err := strconv.Atoi(userID)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Invalid limit value: "+limit)
+	}
 
 	filters := data.Filters{
-		ID:           int(userID),
-		Page:         int(page),
-		Limit:        int(limit),
+		ID:           userIDInt,
+		Page:         int(pageInt),
+		Limit:        int(limitInt),
 		Sort:         sort,
 		SortSafeList: []string{"id", "title", "readtime", "likescount", "-id", "-title", "-readtime", "-likescount"},
 	}
@@ -95,6 +115,19 @@ func ConvertPostToGRPCResponse(post *data.Post) *posts.Post {
 		UserId:    post.UserID,
 		UserName:  post.UserName,
 		CreatedAt: timestamppb.New(post.CreatedAt),
+	}
+}
+
+func AssignMetadataValue(ctx context.Context, keys string, target *string) {
+	var values []string
+
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		values = md.Get("user-id")
+	}
+
+	if len(values) > 0 {
+		*target = values[0]
 	}
 }
 
@@ -181,7 +214,6 @@ func (u *PostsService) CreatePost(ctx context.Context, req *posts.CreatePostRequ
 }
 
 // Update a post
-// CHECK IF THE USER FROM GRPC METADATA IS THE USER CREATED THE POST
 func (u *PostsService) UpdatePost(ctx context.Context, req *posts.UpdatePostRequest) (*posts.GetPostResponse, error) {
 	id := req.GetId()
 	title := req.GetTitle()
@@ -278,6 +310,27 @@ func (u *PostsService) DeletePost(ctx context.Context, req *posts.GetPostRequest
 	id := req.GetId()
 
 	err := u.Models.Posts.Delete(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			return nil, status.Errorf(codes.NotFound, "requested resource is not found")
+		default:
+			err := u.Application.ServerErrorResponse(err.Error())
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	res := &posts.DeletePostResponse{Message: "post deleted successfully"}
+	return res, nil
+}
+
+// Delete all the posts for a single user
+func (u *PostsService) DeletePostsForUser(ctx context.Context, req *posts.GetPostRequest) (*posts.DeletePostResponse, error) {
+	id := req.GetId()
+
+	err := u.Models.Posts.DeleteForUser(id)
 	if err != nil {
 		switch {
 		case errors.Is(err, data.ErrRecordNotFound):
@@ -472,43 +525,6 @@ func (u *PostsService) DeleteComment(ctx context.Context, req *posts.GetPostRequ
 
 	res := &posts.DeletePostResponse{Message: "comment deleted successfully"}
 	return res, nil
-}
-
-// Pushes an event to RabbitMQ
-func (app *application) pushToQueue(name string, data any, key string) error {
-	emitter, err := event.NewEventEmitter(app.Rabbit)
-	if err != nil {
-		return err
-	}
-
-	payload := RabbitPayload{
-		Name: name,
-		Data: data,
-	}
-
-	j, _ := json.MarshalIndent(&payload, "", "\t")
-	err = emitter.Push(string(j), key)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Logs error via RabbitMQ
-func (app *application) logViaRabbit(name, errorMessage, severity string) error {
-	timestamp := time.Now().Format("2006-01-02 15:04:05")
-
-	stackTrace := string(debug.Stack())
-
-	logMessage := fmt.Sprintf("Timestamp: %s\nError: %s\nStackTrace:\n%s", timestamp, errorMessage, stackTrace)
-
-	err := app.pushToQueue(name, logMessage, severity)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Starts listening to gRPC calls

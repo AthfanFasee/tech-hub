@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/AthfanFasee/payment-service/internal/cards"
-	"github.com/AthfanFasee/payment-service/internal/models"
+	"github.com/AthfanFasee/payment/internal/cards"
+	"github.com/AthfanFasee/payment/internal/models"
 	"github.com/stripe/stripe-go/v72"
 )
 
@@ -184,73 +184,6 @@ func (app *application) SaveOrder(order models.Order) (int, error) {
 		return 0, err
 	}
 	return id, nil
-}
-
-func (app *application) VirtualTerminalPaymentSucceeded(w http.ResponseWriter, r *http.Request) {
-	var txnData struct {
-		PaymentAmount   int    `json:"amount"`
-		PaymentCurrency string `json:"currency"`
-		FirstName       string `json:"first_name"`
-		LastName        string `json:"last_name"`
-		Email           string `json:"email"`
-		PaymentIntent   string `json:"payment_intent"`
-		PaymentMethod   string `json:"payment_method"`
-		BankReturnCode  string `json:"bank_return_code"`
-		ExpiryMonth     int    `json:"expiry_month"`
-		ExpiryYear      int    `json:"expiry_year"`
-		LastFour        string `json:"last_four"`
-	}
-
-	err := app.readJSON(w, r, &txnData)
-	if err != nil {
-		app.errorLog.Println(err)
-		return
-	}
-
-	card := cards.Card{
-		Secret: app.config.stripe.secret,
-		Key:    app.config.stripe.key,
-	}
-
-	pi, err := card.RetrievePaymentIntent(txnData.PaymentIntent)
-	if err != nil {
-		app.errorLog.Println(err)
-		return
-	}
-
-	pm, err := card.GetPaymentMethod(txnData.PaymentMethod)
-	if err != nil {
-		app.errorLog.Println(err)
-		return
-	}
-
-	txnData.LastFour = pm.Card.Last4
-	txnData.ExpiryMonth = int(pm.Card.ExpMonth)
-	txnData.ExpiryYear = int(pm.Card.ExpYear)
-
-	txn := models.Transaction{
-		Amount:              txnData.PaymentAmount,
-		Currency:            txnData.PaymentCurrency,
-		LastFour:            txnData.LastFour,
-		ExpiryMonth:         txnData.ExpiryMonth,
-		ExpiryYear:          txnData.ExpiryYear,
-		PaymentIntent:       txnData.PaymentIntent,
-		PaymentMethod:       txnData.PaymentMethod,
-		BankReturnCode:      pi.Charges.Data[0].ID,
-		TransactionStatusID: 2,
-	}
-
-	_, err = app.SaveTransaction(txn)
-	if err != nil {
-		app.errorLog.Println(err)
-		return
-	}
-
-	err = app.writeJSON(w, http.StatusOK, envelope{"message": "Successful", "transaction": txn}, nil)
-	if err != nil {
-		app.errorLog.Println(err)
-		return
-	}
 }
 
 // Refunds a charge

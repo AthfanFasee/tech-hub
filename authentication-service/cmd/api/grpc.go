@@ -3,18 +3,15 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"strings"
 	"time"
 
-	"github.com/AthfanFasee/authentication/event"
 	"github.com/AthfanFasee/authentication/internal/data"
 	"github.com/AthfanFasee/authentication/internal/validator"
 	users "github.com/AthfanFasee/authentication/proto"
@@ -181,7 +178,7 @@ func (u *UserService) Register(ctx context.Context, req *users.RegisterRequest) 
 		"activationToken": token,
 		"userID":          id,
 	}
-	err = u.Application.pushToQueue("mail", mailData, "mailUser")
+	err = u.Application.pushToQueue("mailUser", mailData, "mail")
 	if err != nil {
 		log.Printf("error sending mail via rabbitmq : %v", err.Error())
 	}
@@ -373,43 +370,6 @@ func (app *application) generateJWTToken(userID int64, name string, activated bo
 	}
 
 	return token, nil
-}
-
-// Pushes an event to RabbitMQ
-func (app *application) pushToQueue(name string, data any, key string) error {
-	emitter, err := event.NewEventEmitter(app.Rabbit)
-	if err != nil {
-		return err
-	}
-
-	payload := RabbitPayload{
-		Name: name,
-		Data: data,
-	}
-
-	j, _ := json.MarshalIndent(&payload, "", "\t")
-	err = emitter.Push(string(j), key)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Logs error via RabbitMQ
-func (app *application) logViaRabbit(name, errorMessage, severity string) error {
-	timestamp := time.Now().Format("2006-01-02 15:04:05")
-
-	stackTrace := string(debug.Stack())
-
-	logMessage := fmt.Sprintf("Timestamp: %s\nError: %s\nStackTrace:\n%s", timestamp, errorMessage, stackTrace)
-
-	err := app.pushToQueue(name, logMessage, severity)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Starts listening to gRPC calls

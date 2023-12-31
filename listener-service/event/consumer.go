@@ -7,7 +7,8 @@ import (
 	"log"
 	"time"
 
-	logs "github.com/AthfanFasee/listener/proto"
+	logs "github.com/AthfanFasee/listener/proto/logs"
+	mail "github.com/AthfanFasee/listener/proto/mail"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -61,9 +62,9 @@ func (consumer *Consumer) Listen(topics []string) error {
 	// it'll be routed to the queue represented by q.Name.
 	for _, s := range topics {
 		ch.QueueBind(
-			q.Name,       // Queue(random) Name
-			s,            // Topic name
-			"logs_topic", // Exchange Name
+			q.Name,     // Queue(random) Name
+			s,          // Topic name
+			"tech_hub", // Exchange Name
 			false,
 			nil,
 		)
@@ -106,7 +107,10 @@ func handlePayload(payload PayLoad) {
 		}
 
 	case "mail":
-		// mail
+		err := SendMailViaGRPC(payload)
+		if err != nil {
+			log.Println(err)
+		}
 
 	default:
 		err := logViaGRPC(payload)
@@ -134,6 +138,30 @@ func logViaGRPC(entry PayLoad) error {
 			Name: entry.Name,
 			Data: entry.Data.(string),
 		},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Send welcome mail via gRPC
+func SendMailViaGRPC(entry PayLoad) error {
+	conn, err := grpc.Dial("mail-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close()
+
+	c := mail.NewMailServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	_, err = c.SendWelcomeMail(ctx, &mail.SendWelcomeMailRequest{
+		MailEntry: entry.Data.(*mail.Mail),
 	})
 
 	if err != nil {

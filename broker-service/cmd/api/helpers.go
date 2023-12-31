@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AthfanFasee/broker/event"
 	"github.com/AthfanFasee/broker/internal/validator"
 	"github.com/julienschmidt/httprouter"
 )
@@ -18,8 +17,8 @@ import (
 type envelope map[string]interface{}
 
 type RabbitPayload struct {
-	Name string `json:"name"`
-	Data string `json:"data"`
+	Name string
+	Data any
 }
 
 // Encode data into JSON
@@ -146,24 +145,4 @@ func (app *application) readInt(queryString url.Values, key string, defaultValue
 	}
 
 	return intValue
-}
-
-func (app *application) pushToQueue(name, message string) error {
-	emitter, err := event.NewEventEmitter(app.Rabbit)
-	if err != nil {
-		return err
-	}
-
-	payload := RabbitPayload{
-		Name: name,
-		Data: message,
-	}
-
-	j, _ := json.MarshalIndent(&payload, "", "\t")
-	err = emitter.Push(string(j), "log.INFO")
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

@@ -9,19 +9,18 @@ import (
 	"os"
 	"time"
 
-	"github.com/AthfanFasee/payment-service/internal/models"
+	"github.com/AthfanFasee/payment/internal/models"
+	"github.com/AthfanFasee/payment/utils"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 const version = "1.0.0"
 
 type config struct {
-	port int
-	env  string
-	db   struct {
-		dsn string
-	}
-	stripe struct {
+	port     int
+	env      string
+	mysqlDSN string
+	stripe   struct {
 		secret string
 		key    string
 	}
@@ -53,29 +52,36 @@ func (app *application) serve() error {
 func main() {
 	var cfg config
 
-	flag.IntVar(&cfg.port, "port", 4001, "Server port to listen on")
-	flag.StringVar(&cfg.env, "env", "development", "Application environment {development|production|maintenance}")
+	// Set up configs from env file
+	env, err := utils.LoadEnv()
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
 
-	flag.Parse()
-
-	cfg.stripe.key = os.Getenv("STRIPE_KEY")
-	cfg.stripe.secret = os.Getenv("STRIPE_SECRET")
+	cfg.port = env.Port
+	cfg.mysqlDSN = env.MysqlDSN
+	cfg.stripe.key = env.StripeKey
+	cfg.stripe.secret = env.StripeSecret
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	// ToDo : Hanlde dsn
-	conn, err := OpenDB(cfg.db.dsn)
+	flag.StringVar(&cfg.env, "env", "development", "Application environment {development|production|maintenance}")
+
+	flag.Parse()
+
+	conn, err := OpenDB(cfg.mysqlDSN)
 	if err != nil {
-		errorLog.Fatal(err)
+		log.Fatal(err)
 	}
 	defer conn.Close()
 
 	app := &application{
 		config:   cfg,
+		version:  version,
 		infoLog:  infoLog,
 		errorLog: errorLog,
-		version:  version,
 		DB:       models.DBModel{DB: conn},
 	}
 

@@ -10,16 +10,17 @@ import (
 	"strings"
 	"time"
 
+	util "github.com/AthfanFasee/broker/utils"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // Configuration settings
 type config struct {
-	port    int
-	env     string
-	metrics bool
-	dsn     string
-	limiter struct {
+	port      int
+	env       string
+	metrics   bool
+	rabbitDSN string
+	limiter   struct {
 		rps     float64
 		burst   int
 		enabled bool
@@ -37,8 +38,15 @@ type application struct {
 func main() {
 	var cfg config
 
-	cfg.dsn = "amqp://guest:guest@rabbitmq"
-	cfg.port = 80
+	// Set up configs from env file
+	env, err := util.LoadEnv()
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+
+	cfg.port = env.Port
+	cfg.rabbitDSN = env.RabbitDSN
 
 	// Server Related
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
@@ -54,7 +62,7 @@ func main() {
 	})
 
 	// Connect to rabbitmq.
-	rabbitConn, err := connectToRabbit(cfg.dsn)
+	rabbitConn, err := connectToRabbit(cfg.rabbitDSN)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)

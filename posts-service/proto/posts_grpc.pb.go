@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PostsServiceClient interface {
-	GetPosts(ctx context.Context, in *GetPostsRequest, opts ...grpc.CallOption) (*GetPostsResponse, error)
+	GetPosts(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*GetPostsResponse, error)
 	GetPost(ctx context.Context, in *GetPostRequest, opts ...grpc.CallOption) (*GetPostResponse, error)
 	CreatePost(ctx context.Context, in *CreatePostRequest, opts ...grpc.CallOption) (*GetPostResponse, error)
 	UpdatePost(ctx context.Context, in *UpdatePostRequest, opts ...grpc.CallOption) (*GetPostResponse, error)
@@ -42,7 +42,7 @@ func NewPostsServiceClient(cc grpc.ClientConnInterface) PostsServiceClient {
 	return &postsServiceClient{cc}
 }
 
-func (c *postsServiceClient) GetPosts(ctx context.Context, in *GetPostsRequest, opts ...grpc.CallOption) (*GetPostsResponse, error) {
+func (c *postsServiceClient) GetPosts(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*GetPostsResponse, error) {
 	out := new(GetPostsResponse)
 	err := c.cc.Invoke(ctx, "/posts.PostsService/GetPosts", in, out, opts...)
 	if err != nil {
@@ -136,7 +136,7 @@ func (c *postsServiceClient) DeleteComment(ctx context.Context, in *GetPostReque
 // All implementations must embed UnimplementedPostsServiceServer
 // for forward compatibility
 type PostsServiceServer interface {
-	GetPosts(context.Context, *GetPostsRequest) (*GetPostsResponse, error)
+	GetPosts(context.Context, *Empty) (*GetPostsResponse, error)
 	GetPost(context.Context, *GetPostRequest) (*GetPostResponse, error)
 	CreatePost(context.Context, *CreatePostRequest) (*GetPostResponse, error)
 	UpdatePost(context.Context, *UpdatePostRequest) (*GetPostResponse, error)
@@ -153,7 +153,7 @@ type PostsServiceServer interface {
 type UnimplementedPostsServiceServer struct {
 }
 
-func (UnimplementedPostsServiceServer) GetPosts(context.Context, *GetPostsRequest) (*GetPostsResponse, error) {
+func (UnimplementedPostsServiceServer) GetPosts(context.Context, *Empty) (*GetPostsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPosts not implemented")
 }
 func (UnimplementedPostsServiceServer) GetPost(context.Context, *GetPostRequest) (*GetPostResponse, error) {
@@ -197,7 +197,7 @@ func RegisterPostsServiceServer(s grpc.ServiceRegistrar, srv PostsServiceServer)
 }
 
 func _PostsService_GetPosts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPostsRequest)
+	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func _PostsService_GetPosts_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: "/posts.PostsService/GetPosts",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostsServiceServer).GetPosts(ctx, req.(*GetPostsRequest))
+		return srv.(PostsServiceServer).GetPosts(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
