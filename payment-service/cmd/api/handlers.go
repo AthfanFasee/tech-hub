@@ -30,13 +30,13 @@ func (app *application) getPaymentIntent(w http.ResponseWriter, r *http.Request)
 
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
-		app.errorLog.Println(err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
 	amount, err := strconv.Atoi(payload.Amount)
 	if err != nil {
-		app.errorLog.Println(err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
@@ -48,13 +48,13 @@ func (app *application) getPaymentIntent(w http.ResponseWriter, r *http.Request)
 
 	pi, msg, err := card.Charge(payload.Currency, amount)
 	if err != nil {
-		app.errorLog.Println(err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"payment_intent": pi, "message": msg}, nil)
 	if err != nil {
-		app.errorLog.Println(err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 }
@@ -64,7 +64,7 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 	var stripeData stripePayload
 	err := json.NewDecoder(r.Body).Decode(&stripeData)
 	if err != nil {
-		app.errorLog.Println(err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
@@ -82,7 +82,7 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 
 	stripeCustomer, msg, err := card.CreateCustomer(stripeData.PaymentMethod, stripeData.Email)
 	if err != nil {
-		app.errorLog.Println(err)
+		app.logError(r, err)
 		okay = false
 		txnMsg = msg
 	}
@@ -90,7 +90,7 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 	if okay {
 		subscription, err = card.SubscribeToPlan(stripeCustomer, stripeData.Plan, stripeData.Email, stripeData.LastFour, "")
 		if err != nil {
-			app.errorLog.Println(err)
+			app.logError(r, err)
 			okay = false
 			txnMsg = "Error subscribing customer"
 		}
@@ -100,14 +100,14 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 	if okay {
 		customerID, err := app.SaveCustomer(stripeData.FirstName, stripeData.LastName, stripeData.Email)
 		if err != nil {
-			app.errorLog.Println(err)
+			app.serverErrorResponse(w, r, err)
 			return
 		}
 
 		// Create a new transaction
 		amount, err := strconv.Atoi(stripeData.Amount)
 		if err != nil {
-			app.errorLog.Println(err)
+			app.serverErrorResponse(w, r, err)
 			return
 		}
 
@@ -118,14 +118,13 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 			ExpiryMonth:         stripeData.ExpiryMonth,
 			ExpiryYear:          stripeData.ExpiryYear,
 			TransactionStatusID: 2,
-			// consider renaming payment intent to subsriptionId or smtng
-			PaymentIntent: subscription.ID,
-			PaymentMethod: stripeData.PaymentMethod,
+			PaymentIntent:       subscription.ID,
+			PaymentMethod:       stripeData.PaymentMethod,
 		}
 
 		txnID, err := app.SaveTransaction(txn)
 		if err != nil {
-			app.errorLog.Println(err)
+			app.serverErrorResponse(w, r, err)
 			return
 		}
 
@@ -140,14 +139,14 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 
 		_, err = app.SaveOrder(order)
 		if err != nil {
-			app.errorLog.Println(err)
+			app.serverErrorResponse(w, r, err)
 			return
 		}
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"message": txnMsg}, nil)
 	if err != nil {
-		app.errorLog.Println(err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
@@ -197,7 +196,7 @@ func (app *application) RefundCharge(w http.ResponseWriter, r *http.Request) {
 
 	err := app.readJSON(w, r, &chargeToRefund)
 	if err != nil {
-		app.errorLog.Println(err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
@@ -209,22 +208,19 @@ func (app *application) RefundCharge(w http.ResponseWriter, r *http.Request) {
 
 	err = card.Refund(chargeToRefund.PaymentIntent, chargeToRefund.Amount)
 	if err != nil {
-		app.errorLog.Println(err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
 	// Update refund status in the DB
-
 	err = app.Models.Payment.UpdateOrderStatus(chargeToRefund.Id, 2)
 	if err != nil {
-		// make error so refund is success but only db could not update
-		app.errorLog.Println(err)
-		return
+		app.logViaRabbit("error", err.Error(), "log.ERROR")
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"message": "Successful"}, nil)
 	if err != nil {
-		app.errorLog.Println(err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 }
@@ -238,7 +234,7 @@ func (app *application) CancelSubscription(w http.ResponseWriter, r *http.Reques
 
 	err := app.readJSON(w, r, &subToCancel)
 	if err != nil {
-		app.errorLog.Println(err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
@@ -250,20 +246,18 @@ func (app *application) CancelSubscription(w http.ResponseWriter, r *http.Reques
 
 	err = card.CancelSubscription(subToCancel.PaymentIntent)
 	if err != nil {
-		app.errorLog.Println(err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 
 	err = app.Models.Payment.UpdateOrderStatus(subToCancel.ID, 3)
 	if err != nil {
-		// make error so subscription is cancelled but only db could not update
-		app.errorLog.Println(err)
-		return
+		app.logViaRabbit("error", err.Error(), "log.ERROR")
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"message": "Successful"}, nil)
 	if err != nil {
-		app.errorLog.Println(err)
+		app.serverErrorResponse(w, r, err)
 		return
 	}
 

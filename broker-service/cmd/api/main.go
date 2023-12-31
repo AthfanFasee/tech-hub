@@ -31,8 +31,23 @@ type config struct {
 }
 
 type application struct {
-	config config
-	Rabbit *amqp.Connection
+	config   config
+	RabbitMQ *amqp.Connection
+}
+
+func (app *application) serve() error {
+	srv := &http.Server{
+		Addr:              fmt.Sprintf(":%d", app.config.port),
+		Handler:           app.routes(),
+		IdleTimeout:       30 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      5 * time.Second,
+	}
+
+	log.Printf("Server started on port %d\n", app.config.port)
+
+	return srv.ListenAndServe()
 }
 
 func main() {
@@ -71,21 +86,13 @@ func main() {
 	defer rabbitConn.Close()
 
 	app := application{
-		config: cfg,
-		Rabbit: rabbitConn,
+		config:   cfg,
+		RabbitMQ: rabbitConn,
 	}
 
-	log.Printf("Server started on port %d\n", cfg.port)
-
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", cfg.port),
-		Handler: app.routes(),
-	}
-
-	err = srv.ListenAndServe()
-
+	err = app.serve()
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 }
 

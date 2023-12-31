@@ -5,11 +5,7 @@ import (
 )
 
 type Config struct {
-	Port         int    `mapstructure:"SERVER_PORT"`
-	MysqlDSN     string `mapstructure:"MYSQL_DSN"`
-	RabbitDSN    string `mapstructure:"RABBITMQ_DSN"`
-	StripeSecret string `mapstructure:"STRIPE_SECRET"`
-	StripeKey    string `mapstructure:"STRIPE_KEY"`
+	RabbitDSN string `mapstructure:"RABBITMQ_DSN"`
 }
 
 var (

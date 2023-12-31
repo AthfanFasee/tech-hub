@@ -8,12 +8,24 @@ import (
 	"time"
 
 	"github.com/AthfanFasee/listener/event"
+	"github.com/AthfanFasee/listener/utils"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
+	var rabbitDSN string
+
+	// Set up configs from env file
+	env, err := utils.LoadEnv()
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+
+	rabbitDSN = env.RabbitDSN
+
 	// Connect to rabbitmq.
-	rabbitConn, err := connect()
+	rabbitConn, err := connect(rabbitDSN)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
@@ -37,14 +49,14 @@ func main() {
 	}
 }
 
-func connect() (*amqp.Connection, error) {
+func connect(rabbitDSN string) (*amqp.Connection, error) {
 	var counts int64
 	var backOff = 1 * time.Second
 	var connection *amqp.Connection
 
 	// Wait until rabbitmq is ready
 	for {
-		c, err := amqp.Dial("amqp://guest:guest@rabbitmq")
+		c, err := amqp.Dial(rabbitDSN)
 		if err != nil {
 			fmt.Println("RabbitMQ is not yet ready...")
 			counts++

@@ -16,11 +16,6 @@ import (
 
 type envelope map[string]interface{}
 
-type RabbitPayload struct {
-	Name string
-	Data any
-}
-
 // Encode data into JSON
 func (app *application) writeJSON(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
 	// MarshalIndent will return a []byte containing the encoded JSON with any prefix and indent added
