@@ -1,4 +1,4 @@
-# My Blog Posts Platform (Back-End)
+# Tech Hub (Microservices)
 
 A technical hub platform composed of seven distinct services, each serving a unique purpose, and orchestrated through a broker service that acts as the sole gateway to the internet. The platform employs JWT tokens for user registration, login, and authentication, ensuring secure user interactions.
 
