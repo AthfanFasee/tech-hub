@@ -1,11 +1,11 @@
 SHELL=cmd.exe
-FRONT_END_BINARY=frontApp.exe
 BROKER_BINARY=brokerApp
 AUTH_BINARY=authenticationApp
 PAYMENT_BINARY=paymentApp
 LOGGER_BINARY=loggerApp
 MAIL_BINARY=mailerApp
 LISTENER_BINARY=listenerApp
+POSTS_BINARY=postsApp
 
 
 # ==================================================================================== #
@@ -21,7 +21,7 @@ up:
 
 ## up_build: stops docker-compose (if running), builds all projects and starts docker compose
 .PHONY: up_build
-up_build: build_broker build_auth build_logger build_mail build_listener build_payment
+up_build: build_broker build_auth build_logger build_mail build_listener build_payment build_posts
 	@echo Stopping docker images (if running...)
 	docker-compose down
 	@echo Building (when required) and starting docker images...
@@ -75,4 +75,11 @@ build_mail:
 build_listener:
 	@echo Building listener binary...
 	chdir ..\listener-service && set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0 && go build -o ${LISTENER_BINARY} .
+	@echo Done!
+	
+## build_posts: builds the posts binary as a linux executable
+.PHONY: build_posts
+build_posts:
+	@echo Building posts binary...
+	chdir ..\posts-service && set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0 && go build -o ${POSTS_BINARY} .
 	@echo Done!
