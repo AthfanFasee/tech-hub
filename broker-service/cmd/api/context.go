@@ -15,9 +15,9 @@ const userAuthenticatedContextKey = contextKey("user-authenticated")
 
 func (app *application) contextSetUserInfo(r *http.Request, userID int64, userName string, userActivated bool, userAuthenticated bool) *http.Request {
 	ctx := context.WithValue(r.Context(), userIdContextKey, userID)
-	ctx = context.WithValue(r.Context(), userNameContextKey, userName)
-	ctx = context.WithValue(r.Context(), userActivatedContextKey, userActivated)
-	ctx = context.WithValue(r.Context(), userAuthenticatedContextKey, userAuthenticated)
+	ctx = context.WithValue(ctx, userNameContextKey, userName)
+	ctx = context.WithValue(ctx, userActivatedContextKey, userActivated)
+	ctx = context.WithValue(ctx, userAuthenticatedContextKey, userAuthenticated)
 	return r.WithContext(ctx)
 }
 
