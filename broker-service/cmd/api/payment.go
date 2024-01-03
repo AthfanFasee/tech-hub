@@ -144,7 +144,7 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 }
 
 // Makes http request to payment-service to refund charge
-func (app *application) RefundCharge(w http.ResponseWriter, r *http.Request) {
+func (app *application) refundCharge(w http.ResponseWriter, r *http.Request) {
 	var chargeToRefund chargeToRefund
 
 	// Decoding JSON values in to input struct
@@ -196,7 +196,7 @@ func (app *application) RefundCharge(w http.ResponseWriter, r *http.Request) {
 }
 
 // Makes http request to payment-service to cancel subscription
-func (app *application) CancelSubscription(w http.ResponseWriter, r *http.Request) {
+func (app *application) cancelSubscription(w http.ResponseWriter, r *http.Request) {
 	var subToCancel subToCancel
 
 	// Decoding JSON values in to input struct

@@ -41,5 +41,11 @@ func (app *application) routes() http.Handler {
 	router.HandlerFunc(http.MethodPost, "/api/v1/auth/login", app.authenticateUserHandler)
 	router.HandlerFunc(http.MethodPost, "/api/v1/auth/delete", app.requireActivatedUser(app.deleteUserHandler))
 
+	// Payment routes
+	router.HandlerFunc(http.MethodPost, "/api/v1/payment/payment-intent", app.getPaymentIntent)
+	router.HandlerFunc(http.MethodPost, "/api/v1/payment/subscribe", app.createCustomerAndSubscribeToPlan)
+	router.HandlerFunc(http.MethodPost, "/api/v1/payment/refund", app.refundCharge)
+	router.HandlerFunc(http.MethodPost, "/api/v1/payment/cancel-subscription", app.cancelSubscription)
+
 	return app.recoverPanic(app.secureHeaders(app.enableCORS(app.rateLimit(app.authenticate(router)))))
 }
