@@ -39,6 +39,7 @@ func (app *application) secureHeaders(next http.Handler) http.Handler {
 	})
 }
 
+// Provides client based rate limiting
 func (app *application) rateLimit(next http.Handler) http.Handler {
 	type client struct {
 		limiter  *rate.Limiter
