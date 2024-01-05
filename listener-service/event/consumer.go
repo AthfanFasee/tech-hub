@@ -31,6 +31,7 @@ func NewConsumer(conn *amqp.Connection) (Consumer, error) {
 	return consumer, nil
 }
 
+// Sets up a channel
 func (consumer *Consumer) setup() error {
 	// Channel acts as a communication pathway for the service to talk to RabbitMQ
 	channel, err := consumer.conn.Channel()
@@ -46,6 +47,7 @@ type PayLoad struct {
 	Data any    `json:"data"`
 }
 
+// Listens to events and reatcs accordingly
 func (consumer *Consumer) Listen(topics []string) error {
 	ch, err := consumer.conn.Channel()
 	if err != nil {
@@ -59,7 +61,7 @@ func (consumer *Consumer) Listen(topics []string) error {
 		return err
 	}
 	// Whenever a message is sent to the "logs_topic" exchange with a topic that matches any in the topics slice,
-	// it'll be routed to the queue represented by q.Name.
+	// it'll be routed to the queue represented by q.Name
 	for _, s := range topics {
 		ch.QueueBind(
 			q.Name,     // Queue(random) Name
@@ -98,6 +100,7 @@ func (consumer *Consumer) Listen(topics []string) error {
 	return nil
 }
 
+// Handls payload and reacts according to payload.Name
 func handlePayload(payload PayLoad) {
 	switch payload.Name {
 	case "log", "error":
@@ -147,7 +150,7 @@ func logViaGRPC(entry PayLoad) error {
 	return nil
 }
 
-// Send welcome mail via gRPC
+// Sends welcome mail via gRPC
 func SendMailViaGRPC(entry PayLoad) error {
 	conn, err := grpc.Dial("mail-service:50051", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
