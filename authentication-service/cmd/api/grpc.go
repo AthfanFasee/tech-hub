@@ -331,6 +331,7 @@ func (u *UserService) Activate(ctx context.Context, req *users.ActivateRequest) 
 	return res, nil
 }
 
+// Generates JWT token using the private key
 func (app *application) generateJWTToken(userID int64, name string, activated bool) (string, error) {
 	// Load the private key
 	keysDir := filepath.Join(".", "keys")

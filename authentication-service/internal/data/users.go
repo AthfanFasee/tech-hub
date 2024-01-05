@@ -14,7 +14,7 @@ const dbTimeout = time.Second * 3
 
 var db *sql.DB
 
-// User is the structure which holds one user from the database.
+// User is the structure which holds one user from the database
 type User struct {
 	ID        int64     `json:"id"`
 	Email     string    `json:"email"`
@@ -204,7 +204,7 @@ func (u UserModel) Delete(id int64) error {
 	return nil
 }
 
-// ResetPassword is the method we will use to change a user's password.
+// Resets a user's password
 func (u UserModel) ResetPassword(password string, id int64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()

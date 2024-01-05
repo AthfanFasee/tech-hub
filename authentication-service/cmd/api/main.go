@@ -74,6 +74,7 @@ func main() {
 	app.gRPCListen()
 }
 
+// Opens a connection to postgreSQL db
 func openDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -91,6 +92,7 @@ func openDB(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
+// Connects to postgreSQL db
 func connectToPostgreSQL(dsn string) (*sql.DB, error) {
 	var counts int64
 
@@ -114,6 +116,7 @@ func connectToPostgreSQL(dsn string) (*sql.DB, error) {
 	}
 }
 
+// Connects to rabbitMQ
 func connectToRabbit(dsn string) (*amqp.Connection, error) {
 	var counts int64
 	var backOff = 1 * time.Second
