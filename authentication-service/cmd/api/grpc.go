@@ -281,7 +281,6 @@ func (u *UserService) Activate(ctx context.Context, req *users.ActivateRequest) 
 	if claimsMap, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		claims = claimsMap
 	} else {
-		// token is not valid
 		v.AddError("token", "invalid or expired token")
 		err := u.Application.checkValidationStatus(v)
 		if err != nil {
@@ -405,7 +404,7 @@ func (app *application) gRPCListen() {
 				healthcheck.SetServingStatus(dbSystem, healthpb.HealthCheckResponse_SERVING)
 			}
 
-			// Change this in future, so that check happens only when errors occur
+			// TODO : Change this, so that check happens only when errors occur
 			time.Sleep(time.Second * 60)
 		}
 	}()

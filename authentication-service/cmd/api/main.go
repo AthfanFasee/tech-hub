@@ -44,13 +44,12 @@ func main() {
 
 	log.Println("Starting authentication service")
 
-	// Connect to PostgreSQL
 	db, err := connectToPostgreSQL(cfg.postgreDSN)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
-	// Connect to RabbitMQ
+
 	rabbitConn, err := connectToRabbit(cfg.rabbitDSN)
 	if err != nil {
 		log.Println(err)

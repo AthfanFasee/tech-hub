@@ -44,7 +44,7 @@ func Matches(value string, rx *regexp.Regexp) bool {
 func Unique(values []string) bool {
 	uniqueValues := make(map[string]bool)
 
-	// When we are adding each value of slice to map, if a duplicate value comes, it will be replaced
+	// Add each value of slice to map, if a duplicate value comes, it will be replaced
 	for _, value := range values {
 		uniqueValues[value] = true
 	}

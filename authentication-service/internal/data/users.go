@@ -14,7 +14,7 @@ const dbTimeout = time.Second * 3
 
 var db *sql.DB
 
-// User is the structure which holds one user from the database
+// User is the structure which holds one user's info from the database
 type User struct {
 	ID        int64     `json:"id"`
 	Email     string    `json:"email"`
@@ -242,7 +242,6 @@ func (p *Password) PasswordMatches(plainText string) (bool, error) {
 	if err != nil {
 		switch {
 		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
-			// invalid password
 			return false, nil
 		default:
 			return false, err
@@ -252,18 +251,20 @@ func (p *Password) PasswordMatches(plainText string) (bool, error) {
 	return true, nil
 }
 
-// Validation related.
+// Validate user email
 func ValidateEmail(v *validator.Validator, email string) {
 	v.Check(email != "", "email", "email must be provided")
 	v.Check(validator.Matches(email, validator.EmailRX), "email", "must be a valid email address")
 }
 
+// Validate user password
 func ValidatePasswordPlaintext(v *validator.Validator, password string) {
 	v.Check(password != "", "password", "password must be provided")
 	v.Check(len(password) >= 6, "password", "password must be at least 6 bytes long")
 	v.Check(len(password) <= 72, "password", "password must not be more than 72 bytes long")
 }
 
+// Validate user info
 func ValidateUser(v *validator.Validator, user *User) {
 	v.Check(user.Name != "", "name", "name must be provided")
 	v.Check(len(user.Name) <= 100, "name", "name must not be more than 100 bytes long")
