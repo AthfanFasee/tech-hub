@@ -15,8 +15,7 @@ var (
 	configPath = "."
 )
 
-// Read configuration from environemnt variables.
-// Environemnt variables are replaced with correct values in prod environment.
+// Read configuration from environemnt variables
 func LoadEnv() (config Config, err error) {
 	viper.SetConfigName(configName)
 	viper.SetConfigType(configType)

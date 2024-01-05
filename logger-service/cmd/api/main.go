@@ -64,18 +64,7 @@ func main() {
 	app.gRPCListen()
 }
 
-// func (app *application) serve() {
-// 	srv := &http.Server{
-// 		Addr:    fmt.Sprintf(":%s", PORT),
-// 		Handler: app.routes(),
-// 	}
-
-// 	err := srv.ListenAndServe()
-// 	if err != nil {
-// 		log.Panic()
-// 	}
-// }
-
+// Opens a connection to mongoDB
 func connectToMongo(mongoURL string) (*mongo.Client, error) {
 	// Connection options
 	clientOptions := options.Client().ApplyURI(mongoURL)
@@ -85,7 +74,6 @@ func connectToMongo(mongoURL string) (*mongo.Client, error) {
 		Password: "secret",
 	})
 
-	// Connect to DB
 	con, err := mongo.Connect(context.TODO(), options.Client())
 	if err != nil {
 		log.Println("Error connection:", err)

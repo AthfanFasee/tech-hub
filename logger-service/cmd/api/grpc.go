@@ -18,8 +18,7 @@ type LogServer struct {
 	Models data.Models
 }
 
-// CHANGE THE WAY ERRORS R HANDLED
-
+// Writes a log to mongoDB
 func (l *LogServer) WriteLog(ctx context.Context, req *logs.LogRequest) (*logs.LogResponse, error) {
 	input := req.GetLogEntry()
 
@@ -41,6 +40,7 @@ func (l *LogServer) WriteLog(ctx context.Context, req *logs.LogRequest) (*logs.L
 
 }
 
+// Starts listening to gRPC calls
 func (app *application) gRPCListen() {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", app.config.gRPCPort))
 	if err != nil {

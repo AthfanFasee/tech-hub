@@ -33,6 +33,7 @@ func New(mongo *mongo.Client) Models {
 	}
 }
 
+// Inserts a log entry
 func (l *LogEntry) Insert(entry LogEntry) error {
 	collection := client.Database("logs").Collection("logs")
 
@@ -50,6 +51,7 @@ func (l *LogEntry) Insert(entry LogEntry) error {
 	return nil
 }
 
+// Gets all log entries
 func (l *LogEntry) All() ([]*LogEntry, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
@@ -83,6 +85,7 @@ func (l *LogEntry) All() ([]*LogEntry, error) {
 	return logs, nil
 }
 
+// Gets a single log entry by id
 func (l *LogEntry) GetOne(id string) (*LogEntry, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
@@ -103,6 +106,7 @@ func (l *LogEntry) GetOne(id string) (*LogEntry, error) {
 	return &entry, nil
 }
 
+// Drops the logs collection from db
 func (l *LogEntry) DropCollection() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
@@ -116,13 +120,14 @@ func (l *LogEntry) DropCollection() error {
 	return nil
 }
 
-func (l *LogEntry) Update() (*mongo.UpdateResult, error) {
+// Updates a single log entry by id
+func (l *LogEntry) Update(id string) (*mongo.UpdateResult, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	collection := client.Database("logs").Collection("logs")
 
-	docID, err := primitive.ObjectIDFromHex(l.ID)
+	docID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
