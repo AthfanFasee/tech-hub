@@ -44,13 +44,12 @@ func main() {
 
 	log.Println("Starting authentication service")
 
-	// Connect to PostgreSQL
 	db, err := connectToPostgreSQL(cfg.postgreDSN)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
-	// Connect to RabbitMQ
+
 	rabbitConn, err := connectToRabbit(cfg.rabbitDSN)
 	if err != nil {
 		log.Println(err)
@@ -74,6 +73,7 @@ func main() {
 	app.gRPCListen()
 }
 
+// Opens a connection to postgreSQL
 func openDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -91,6 +91,7 @@ func openDB(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
+// Connects to postgreSQL
 func connectToPostgreSQL(dsn string) (*sql.DB, error) {
 	var counts int64
 
@@ -114,6 +115,7 @@ func connectToPostgreSQL(dsn string) (*sql.DB, error) {
 	}
 }
 
+// Connects to rabbitMQ
 func connectToRabbit(dsn string) (*amqp.Connection, error) {
 	var counts int64
 	var backOff = 1 * time.Second

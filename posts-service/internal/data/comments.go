@@ -22,7 +22,7 @@ type CommentModel struct {
 	DB *sql.DB
 }
 
-// Get all the comments for a single post
+// Gets all the comments for a single post
 func (c CommentModel) GetAllForPost(postID int64) ([]*Comment, error) {
 	query := `SELECT id, text, user_id, user_name, post_id
 	FROM comments
@@ -86,7 +86,7 @@ func (c CommentModel) Insert(comment *Comment) error {
 	return c.DB.QueryRowContext(ctx, query, args...).Scan(&comment.ID)
 }
 
-// Delete single comment
+// Deletes a single comment
 func (c CommentModel) Delete(id int64) error {
 	query := `
 	DELETE FROM comments
@@ -112,7 +112,7 @@ func (c CommentModel) Delete(id int64) error {
 	return nil
 }
 
-// Validation related.
+// Validates comment data
 func ValidateComment(v *validator.Validator, comment *Comment) {
 	v.Check(comment.Text != "", "text", "Comment cannot be empty")
 	v.Check(len(comment.Text) <= 200, "text", "Comment can only contain 200 characters or less")

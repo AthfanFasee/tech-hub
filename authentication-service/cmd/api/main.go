@@ -73,7 +73,7 @@ func main() {
 	app.gRPCListen()
 }
 
-// Opens a connection to postgreSQL db
+// Opens a connection to postgreSQL
 func openDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -91,7 +91,7 @@ func openDB(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
-// Connects to postgreSQL db
+// Connects to postgreSQL
 func connectToPostgreSQL(dsn string) (*sql.DB, error) {
 	var counts int64
 

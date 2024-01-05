@@ -35,6 +35,7 @@ type PostModel struct {
 	DB *sql.DB
 }
 
+// Gets all posts
 func (p PostModel) GetAll(title string, filters Filters) ([]*Post, Metadata, error) {
 	// Get post data along with name of the user who created it
 	query := fmt.Sprintf(`
@@ -43,7 +44,7 @@ func (p PostModel) GetAll(title string, filters Filters) ([]*Post, Metadata, err
 	WHERE (to_tsvector('english', title) @@ plainto_tsquery('english', $1) OR $1 = '')
 	AND (created_by = $2 OR $2 = 0)
 	ORDER BY %s %s, id %s
-	LIMIT $3 OFFSET $4`, filters.sortParam(), filters.sortDirection(), filters.sortDirection())
+	LIMIT $3 OFFSET $4`, filters.sortParam(), filters.sortOrder(), filters.sortOrder())
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -90,6 +91,7 @@ func (p PostModel) GetAll(title string, filters Filters) ([]*Post, Metadata, err
 	return posts, metadata, nil
 }
 
+// Gets a single post by id
 func (p PostModel) Get(id int64) (*Post, error) {
 	if id < 1 {
 		return nil, ErrRecordNotFound
@@ -130,6 +132,7 @@ func (p PostModel) Get(id int64) (*Post, error) {
 	return &post, nil
 }
 
+// Inserts post
 func (p PostModel) Insert(post *Post) error {
 	query := `
 		INSERT INTO posts (title, post_text, img, read_time, user_id, user_name) 
@@ -144,6 +147,7 @@ func (p PostModel) Insert(post *Post) error {
 	return p.DB.QueryRowContext(ctx, query, args...).Scan(&post.ID, &post.CreatedAt)
 }
 
+// Updates a single post by id
 func (p PostModel) Update(post *Post) error {
 	query := `
 	UPDATE posts
@@ -179,6 +183,7 @@ func (p PostModel) Update(post *Post) error {
 	return nil
 }
 
+// Deletes a single post by id
 func (p PostModel) Delete(id int64) error {
 	if id < 1 {
 		return ErrRecordNotFound
@@ -208,6 +213,7 @@ func (p PostModel) Delete(id int64) error {
 	return nil
 }
 
+// Deletes all the posts for a single user
 func (p PostModel) DeleteForUser(userID int64) error {
 	if userID < 1 {
 		return ErrRecordNotFound
@@ -237,6 +243,7 @@ func (p PostModel) DeleteForUser(userID int64) error {
 	return nil
 }
 
+// Adds like to a single post
 func (p PostModel) AddLike(post *Post, userID int64) error {
 	// This SQL statement will prevent a user from liking a post twice
 	query := `
@@ -251,6 +258,7 @@ func (p PostModel) AddLike(post *Post, userID int64) error {
 	return p.DB.QueryRowContext(ctx, query, userID, post.ID).Scan(pq.Array(&post.LikedBy))
 }
 
+// Adds dilike to a single post
 func (p PostModel) RemoveLike(post *Post, userID int64) error {
 	query := `
 	UPDATE posts SET liked_by = array_remove(liked_by, $1)
@@ -263,6 +271,7 @@ func (p PostModel) RemoveLike(post *Post, userID int64) error {
 	return p.DB.QueryRowContext(ctx, query, userID, post.ID).Scan(pq.Array(&post.LikedBy))
 }
 
+// Validates post data
 func ValidatePost(v *validator.Validator, post *Post) {
 	v.Check(post.Title != "", "title", "Title must be provided")
 	v.Check(len(post.Title) <= 100, "title", "Title can only contain 100 characters or less")

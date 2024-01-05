@@ -28,6 +28,7 @@ type Models struct {
 	}
 }
 
+// Creates a new Models instance
 func NewModels(db *sql.DB) Models {
 	return Models{
 		Comments: CommentModel{DB: db},

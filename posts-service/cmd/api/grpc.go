@@ -38,7 +38,7 @@ type RabbitPayload struct {
 // Gets all the posts
 func (u *PostsService) GetPosts(ctx context.Context, req *posts.Empty) (*posts.GetPostsResponse, error) {
 
-	// Get filter values from gRPC meta data
+	// Get filter values from gRPC metadata
 	var userID string
 	var page string
 	var limit string
@@ -85,7 +85,7 @@ func (u *PostsService) GetPosts(ctx context.Context, req *posts.Empty) (*posts.G
 		}
 	}
 
-	// Gets posts ready to send via gRPC
+	// Get posts ready to send via gRPC
 	grpcPosts := make([]*posts.Post, len(result))
 	for i, post := range result {
 		grpcPosts[i] = ConvertPostToGRPCResponse(post)
@@ -118,12 +118,13 @@ func ConvertPostToGRPCResponse(post *data.Post) *posts.Post {
 	}
 }
 
-func AssignMetadataValue(ctx context.Context, keys string, target *string) {
+// Assings metadata value for the specific key to the target
+func AssignMetadataValue(ctx context.Context, key string, target *string) {
 	var values []string
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
-		values = md.Get("user-id")
+		values = md.Get(key)
 	}
 
 	if len(values) > 0 {
@@ -163,7 +164,7 @@ func (u *PostsService) GetPost(ctx context.Context, req *posts.GetPostRequest) (
 	return res, nil
 }
 
-// Create a post
+// Creates a post
 func (u *PostsService) CreatePost(ctx context.Context, req *posts.CreatePostRequest) (*posts.GetPostResponse, error) {
 	title := req.GetTitle()
 	postText := req.GetPostText()
@@ -213,7 +214,7 @@ func (u *PostsService) CreatePost(ctx context.Context, req *posts.CreatePostRequ
 	return res, nil
 }
 
-// Update a post
+// Updates a post
 func (u *PostsService) UpdatePost(ctx context.Context, req *posts.UpdatePostRequest) (*posts.GetPostResponse, error) {
 	id := req.GetId()
 	title := req.GetTitle()
@@ -305,7 +306,7 @@ func (u *PostsService) UpdatePost(ctx context.Context, req *posts.UpdatePostRequ
 	return res, nil
 }
 
-// Delete a single post by id
+// Deletes a single post by id
 func (u *PostsService) DeletePost(ctx context.Context, req *posts.GetPostRequest) (*posts.DeletePostResponse, error) {
 	id := req.GetId()
 
@@ -326,7 +327,7 @@ func (u *PostsService) DeletePost(ctx context.Context, req *posts.GetPostRequest
 	return res, nil
 }
 
-// Delete all the posts for a single user
+// Deletes all the posts for a single user
 func (u *PostsService) DeletePostsForUser(ctx context.Context, req *posts.GetPostRequest) (*posts.DeletePostResponse, error) {
 	id := req.GetId()
 
@@ -347,7 +348,7 @@ func (u *PostsService) DeletePostsForUser(ctx context.Context, req *posts.GetPos
 	return res, nil
 }
 
-// Like a single post by id
+// Likes a single post by id
 func (u *PostsService) LikePost(ctx context.Context, req *posts.LikePostRequest) (*posts.GetPostResponse, error) {
 	id := req.GetId()
 	userID := req.GetUserId()
@@ -387,7 +388,7 @@ func (u *PostsService) LikePost(ctx context.Context, req *posts.LikePostRequest)
 	return res, nil
 }
 
-// Dislike a single post by id
+// Dislikes a single post by id
 func (u *PostsService) DislikePost(ctx context.Context, req *posts.LikePostRequest) (*posts.GetPostResponse, error) {
 	id := req.GetId()
 	userID := req.GetUserId()
@@ -444,7 +445,7 @@ func (u *PostsService) GetCommentsForPost(ctx context.Context, req *posts.GetPos
 		}
 	}
 
-	// Gets comments ready to send via gRPC
+	// Get comments ready to send via gRPC
 	grpcComments := make([]*posts.Comment, len(result))
 	for i, comment := range result {
 		grpcComments[i] = ConvertCommentToGRPCResponse(comment)
@@ -466,7 +467,7 @@ func ConvertCommentToGRPCResponse(comment *data.Comment) *posts.Comment {
 
 }
 
-// Create a post
+// Creates a comment
 func (u *PostsService) CreateComment(ctx context.Context, req *posts.CreateCommentRequest) (*posts.CreateCommentResponse, error) {
 	text := req.GetText()
 	userID := req.GetUserId()
@@ -506,7 +507,7 @@ func (u *PostsService) CreateComment(ctx context.Context, req *posts.CreateComme
 	return res, nil
 }
 
-// Delete a single comment by id
+// Deletes a single comment by id
 func (u *PostsService) DeleteComment(ctx context.Context, req *posts.GetPostRequest) (*posts.DeletePostResponse, error) {
 	id := req.GetId()
 

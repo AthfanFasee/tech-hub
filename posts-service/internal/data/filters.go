@@ -15,6 +15,7 @@ type Filters struct {
 	SortSafeList []string
 }
 
+// Sets up sorting param
 func (f Filters) sortParam() string {
 	var sortParam string
 	for _, safeValue := range f.SortSafeList {
@@ -32,7 +33,8 @@ func (f Filters) sortParam() string {
 	panic("unsafe sort parameter: " + f.Sort)
 }
 
-func (f Filters) sortDirection() string {
+// Sets up sorting order
+func (f Filters) sortOrder() string {
 	switch {
 	case f.Sort == "-likescount":
 		return "DESC NULLS LAST"
@@ -43,14 +45,17 @@ func (f Filters) sortDirection() string {
 	}
 }
 
+// Returns the value of limit
 func (f Filters) limit() int {
 	return f.Limit
 }
 
+// Returns the value of offset
 func (f Filters) offset() int {
 	return (f.Page - 1) * f.Limit
 }
 
+// Validates Filters
 func ValidateFilters(v *validator.Validator, f Filters) {
 	v.Check(f.Page > 0, "page", "must be greater than zero")
 	v.Check(f.ID >= 0, "id", "must be greater than zero")
