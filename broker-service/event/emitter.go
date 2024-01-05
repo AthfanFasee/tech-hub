@@ -11,6 +11,7 @@ type Emitter struct {
 	connection *amqp.Connection
 }
 
+// Sets up a channel
 func (e *Emitter) setup() error {
 	channel, err := e.connection.Channel()
 	if err != nil {
@@ -21,6 +22,7 @@ func (e *Emitter) setup() error {
 	return declareExchange(channel)
 }
 
+// Pushes event to channel based on the routing key
 func (e *Emitter) Push(event, key string) error {
 	channel, err := e.connection.Channel()
 	if err != nil {
@@ -51,6 +53,7 @@ func (e *Emitter) Push(event, key string) error {
 	return nil
 }
 
+// Creats a new emitter
 func NewEventEmitter(conn *amqp.Connection) (Emitter, error) {
 	emitter := Emitter{
 		connection: conn,

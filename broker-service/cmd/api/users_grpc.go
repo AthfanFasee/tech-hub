@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	users "github.com/AthfanFasee/authentication/proto"
+	users "github.com/AthfanFasee/broker/proto/users"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"

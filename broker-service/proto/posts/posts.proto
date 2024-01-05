@@ -82,7 +82,8 @@ message GetCommentsForPostResponse {
 message CreateCommentRequest {
     string text = 1;
     int64 user_id = 2;
-    int64 post_id = 3;
+    string user_name = 3;
+    int64 post_id = 4;
 }
 
 message CreateCommentResponse {

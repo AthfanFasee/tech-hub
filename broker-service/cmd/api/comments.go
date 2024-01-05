@@ -44,7 +44,20 @@ func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Add values from req.CONTEXT
+	// Get user info from request context
+	userID, ok := r.Context().Value("user-id").(int64)
+	if !ok {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+	userName, ok := r.Context().Value("user-name").(string)
+	if !ok {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	creatCommentRequestData.UserId = userID
+	creatCommentRequestData.UserName = userName
 
 	result := app.CreateComment(w, r, creatCommentRequestData)
 

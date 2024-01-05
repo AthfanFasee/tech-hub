@@ -4,11 +4,9 @@ import (
 	"io"
 	"net/http"
 
-	users "github.com/AthfanFasee/authentication/proto"
+	users "github.com/AthfanFasee/broker/proto/users"
 	"google.golang.org/protobuf/encoding/protojson"
 )
-
-// ADD DELETE USER HANDLER
 
 // Registers a user
 func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -102,7 +100,7 @@ func (app *application) deleteUserHandler(w http.ResponseWriter, r *http.Request
 
 	result := app.DeleteUser(w, r, getUserRequestData)
 
-	// Before sending a response push an event to delete this user's posts
+	// Before sending a response push an event to rabbitMQ to delete this user's posts
 	app.pushToQueue("deletePost", getUserRequestData.Id, "posts")
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"message": result.Message}, nil)

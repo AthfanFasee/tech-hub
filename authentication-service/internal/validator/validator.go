@@ -13,10 +13,12 @@ type Validator struct {
 	Errors map[string]string
 }
 
+// Returns a new validator instance
 func New() *Validator {
 	return &Validator{Errors: make(map[string]string)}
 }
 
+// Returns true if no validation error exist
 func (v *Validator) Valid() bool {
 	return len(v.Errors) == 0
 }
@@ -35,7 +37,7 @@ func (v *Validator) Check(ok bool, key string, message string) {
 	}
 }
 
-// Returnss true if a string matches a specific regexp pattern
+// Returns true if a string matches a specific regexp pattern
 func Matches(value string, rx *regexp.Regexp) bool {
 	return rx.MatchString(value)
 }
@@ -44,7 +46,7 @@ func Matches(value string, rx *regexp.Regexp) bool {
 func Unique(values []string) bool {
 	uniqueValues := make(map[string]bool)
 
-	// Add each value of slice to map, if a duplicate value comes, it will be replaced
+	// Add each value of slice to map, if a duplicate value comes it will be replaced
 	for _, value := range values {
 		uniqueValues[value] = true
 	}

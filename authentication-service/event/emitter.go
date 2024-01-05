@@ -23,7 +23,7 @@ func (e *Emitter) setup() error {
 	return declareExchange(channel)
 }
 
-// Pushes event to channel using the routing key
+// Pushes event to channel based on the routing key
 func (e *Emitter) Push(event, key string) error {
 	channel, err := e.connection.Channel()
 	if err != nil {

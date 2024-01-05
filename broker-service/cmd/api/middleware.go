@@ -14,6 +14,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
+// Recovers incase of panic and handles it
 func (app *application) recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
@@ -28,6 +29,7 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 	})
 }
 
+// Adds few security headers
 func (app *application) secureHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com")
@@ -97,6 +99,7 @@ func (app *application) rateLimit(next http.Handler) http.Handler {
 	})
 }
 
+// Handles CORS issues
 func (app *application) enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Vary", "Origin")
@@ -131,7 +134,7 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 	})
 }
 
-// Authenticates user and passes user info to req context
+// Authenticates user and passes user info to request context
 func (app *application) authenticate(next http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Vary", "Authorization")
@@ -197,7 +200,7 @@ func (app *application) authenticate(next http.Handler) http.HandlerFunc {
 	})
 }
 
-// Checks that a user authenticated.
+// Checks if a user authenticated
 func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userAuthenticated := app.contextGetUserAuthenticatedStatus(r)
@@ -211,7 +214,7 @@ func (app *application) requireAuthenticatedUser(next http.HandlerFunc) http.Han
 	})
 }
 
-// Checks that a user is both authenticated and activated.
+// Checks if a user is both authenticated and activated
 func (app *application) requireActivatedUser(next http.HandlerFunc) http.HandlerFunc {
 	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _, userActivated := app.contextGetUserInfo(r)

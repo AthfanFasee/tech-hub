@@ -16,7 +16,7 @@ import (
 
 type envelope map[string]interface{}
 
-// Encode data into JSON
+// Encodes data into JSON
 func (app *application) writeJSON(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
 	// MarshalIndent will return a []byte containing the encoded JSON with any prefix and indent added
 	js, err := json.MarshalIndent(data, "", "\t")
@@ -27,8 +27,6 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 	// Append a newline to the JSON to make it easier to view in terminal
 	js = append(js, '\n')
 
-	// Go will not loop over if the map is nil
-	// The reason for not using Set here is that Set takes string as value, but in here our value is a []string
 	for key, value := range headers {
 		w.Header()[key] = value
 	}
@@ -40,7 +38,7 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 	return nil
 }
 
-// Decode JSON values
+// Decodes JSON values
 func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst interface{}) error {
 	// Limit the size of body to 1MB
 	maxBytes := 1_048_576
@@ -57,7 +55,6 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 		var unmarshalTypeError *json.UnmarshalTypeError
 		var invalidUnmarshalError *json.InvalidUnmarshalError
 
-		// fmt.Errorf, errors.New both will return an error type which is an interface with Error() method attached
 		switch {
 		// This err comes when we pass a nil pointer. Unexpected errors from Server better be handled by panic()
 		case errors.As(err, &invalidUnmarshalError):
@@ -100,7 +97,7 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 	return nil
 }
 
-// Read ID param from request url
+// Reads ID param from request url
 func (app *application) readIDParam(r *http.Request) (int64, error) {
 	// Retrieve a slice containing req parameter names and values
 	params := httprouter.ParamsFromContext(r.Context())
@@ -113,11 +110,11 @@ func (app *application) readIDParam(r *http.Request) (int64, error) {
 	return id, nil
 }
 
-// Return a string value from query string map or a default value
+// Returns a string value from query string map or a default value
 func (app *application) readString(queryString url.Values, key string, defaultValue string) string {
 	stringValue := queryString.Get(key)
 
-	// Get() will return empty string if value is'nt found. Then we return default value
+	// queryString.Get() will return empty string if value is'nt found, in that case return default value
 	if stringValue == "" {
 		return defaultValue
 	}
@@ -125,7 +122,7 @@ func (app *application) readString(queryString url.Values, key string, defaultVa
 	return stringValue
 }
 
-// Return an int value from query string map or a default value
+// Returns an int value from query string map or a default value
 func (app *application) readInt(queryString url.Values, key string, defaultValue int, v *validator.Validator) int {
 	stringValue := queryString.Get(key)
 

@@ -12,12 +12,11 @@ func (app *application) routes() http.Handler {
 	router.RedirectFixedPath = true
 	router.RedirectTrailingSlash = true
 
-	// Converting our err helpers as handlers and using them instead of default err handlers
+	// Convert err helpers as handlers and use them instead of default err handlers
 	router.NotFound = http.HandlerFunc(app.notFoundResponse)
 	router.MethodNotAllowed = http.HandlerFunc(app.methodNotAllowedResponse)
 
 	// Application routes
-	// router.HandlerFunc(http.MethodGet, "/api/v1/healthcheck", app.healthCheckHandler)
 	router.Handler(http.MethodGet, "/debug/vars", expvar.Handler())
 	router.HandlerFunc(http.MethodGet, "/api/v1/healthcheck", app.healthCheckHandler)
 

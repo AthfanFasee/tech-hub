@@ -43,7 +43,7 @@ type getPaymentIntentRespone struct {
 func (app *application) getPaymentIntent(w http.ResponseWriter, r *http.Request) {
 	var stripePayload stripePayload
 
-	// Decoding JSON values in to input struct
+	// Decode JSON values in to input struct
 	err := app.readJSON(w, r, &stripePayload)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
@@ -56,7 +56,7 @@ func (app *application) getPaymentIntent(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// call the service
+	// Call the service
 	request, err := http.NewRequest("POST", "http://payment-service/payment-intent", bytes.NewBuffer(jsonData))
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -71,7 +71,7 @@ func (app *application) getPaymentIntent(w http.ResponseWriter, r *http.Request)
 	}
 	defer response.Body.Close()
 
-	// make sure we get back the correct status code
+	// Make sure we get back the correct status code
 	if response.StatusCode != http.StatusAccepted {
 		app.serverErrorResponse(w, r, err)
 		return
@@ -95,7 +95,7 @@ func (app *application) getPaymentIntent(w http.ResponseWriter, r *http.Request)
 func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 	var stripePayload stripePayload
 
-	// Decoding JSON values in to input struct
+	// Decode JSON values in to input struct
 	err := app.readJSON(w, r, &stripePayload)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
@@ -108,7 +108,7 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 		return
 	}
 
-	// call the service
+	// Call the service
 	request, err := http.NewRequest("POST", "http://payment-service/subscribe-to-plan", bytes.NewBuffer(jsonData))
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -123,7 +123,7 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 	}
 	defer response.Body.Close()
 
-	// make sure we get back the correct status code
+	// Make sure we get back the correct status code
 	if response.StatusCode != http.StatusAccepted {
 		app.serverErrorResponse(w, r, err)
 		return
@@ -147,7 +147,7 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 func (app *application) refundCharge(w http.ResponseWriter, r *http.Request) {
 	var chargeToRefund chargeToRefund
 
-	// Decoding JSON values in to input struct
+	// Decode JSON values in to input struct
 	err := app.readJSON(w, r, &chargeToRefund)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
@@ -160,7 +160,7 @@ func (app *application) refundCharge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// call the service
+	// Call the service
 	request, err := http.NewRequest("POST", "http://payment-service/refund", bytes.NewBuffer(jsonData))
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -175,7 +175,7 @@ func (app *application) refundCharge(w http.ResponseWriter, r *http.Request) {
 	}
 	defer response.Body.Close()
 
-	// make sure we get back the correct status code
+	// Make sure we get back the correct status code
 	if response.StatusCode != http.StatusAccepted {
 		app.serverErrorResponse(w, r, err)
 		return
@@ -199,7 +199,7 @@ func (app *application) refundCharge(w http.ResponseWriter, r *http.Request) {
 func (app *application) cancelSubscription(w http.ResponseWriter, r *http.Request) {
 	var subToCancel subToCancel
 
-	// Decoding JSON values in to input struct
+	// Decode JSON values in to input struct
 	err := app.readJSON(w, r, &subToCancel)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
@@ -212,7 +212,7 @@ func (app *application) cancelSubscription(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// call the service
+	// Call the service
 	request, err := http.NewRequest("POST", "http://cancel-subscription", bytes.NewBuffer(jsonData))
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -227,7 +227,7 @@ func (app *application) cancelSubscription(w http.ResponseWriter, r *http.Reques
 	}
 	defer response.Body.Close()
 
-	// make sure we get back the correct status code
+	// Make sure we get back the correct status code
 	if response.StatusCode != http.StatusAccepted {
 		app.serverErrorResponse(w, r, err)
 		return

@@ -13,7 +13,7 @@ import (
 func (app *application) showPostsHandler(w http.ResponseWriter, r *http.Request) {
 	var getPostsRequestData *posts.Empty
 
-	// Get the url.Values map containing the query string data.
+	// Get the url.Values map containing the query string data
 	queryString := r.URL.Query()
 
 	v := validator.New()

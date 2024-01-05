@@ -13,6 +13,7 @@ const userNameContextKey = contextKey("user-name")
 const userActivatedContextKey = contextKey("user-activated")
 const userAuthenticatedContextKey = contextKey("user-authenticated")
 
+// Sets user info to request context, returns a copy of request object with request context
 func (app *application) contextSetUserInfo(r *http.Request, userID int64, userName string, userActivated bool, userAuthenticated bool) *http.Request {
 	ctx := context.WithValue(r.Context(), userIdContextKey, userID)
 	ctx = context.WithValue(ctx, userNameContextKey, userName)
@@ -21,6 +22,7 @@ func (app *application) contextSetUserInfo(r *http.Request, userID int64, userNa
 	return r.WithContext(ctx)
 }
 
+// Gets user info from request context
 func (app *application) contextGetUserInfo(r *http.Request) (int64, string, bool) {
 	userID, ok := r.Context().Value(userIdContextKey).(int64)
 	if !ok {
@@ -38,6 +40,7 @@ func (app *application) contextGetUserInfo(r *http.Request) (int64, string, bool
 	return userID, userName, userActivated
 }
 
+// Gets authentication status info from request context
 func (app *application) contextGetUserAuthenticatedStatus(r *http.Request) bool {
 	userAuthenticated, ok := r.Context().Value(userActivatedContextKey).(bool)
 	if !ok {

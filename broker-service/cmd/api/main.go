@@ -76,7 +76,6 @@ func main() {
 		return nil
 	})
 
-	// Connect to rabbitmq.
 	rabbitConn, err := connectToRabbit(cfg.rabbitDSN)
 	if err != nil {
 		log.Println(err)
@@ -96,6 +95,7 @@ func main() {
 	}
 }
 
+// Opens a connection to rabbitMQ
 func connectToRabbit(dsn string) (*amqp.Connection, error) {
 	var counts int64
 	var backOff = 1 * time.Second
