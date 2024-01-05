@@ -9,7 +9,7 @@ A listener service, powered by RabbitMQ, listens to events and reacts accordingl
 The platform is Docker-powered, ensuring easy deployment and scalability. Exceptional error-handling mechanisms are in place to ensure a smooth user experience. The project has been optimized to eliminate performance bottlenecks, ensuring high performance and reliability. All services are designed with a focus on efficiency and robustness, making the platform technically strong and worth exploring.
 
 ## Technologies Used
-Golang, Google Cloud, AWS, PostgreSQL, Docker, Postman
+Golang, PostgreSQL, MySQL, MongoDB, RabbitMQ, gRPC, Protobuf, Viper, Docker, Stripe. AWS
 
 ## Available Scripts
 All the available commands are mentioned in Makefile in the root directory.
