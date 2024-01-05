@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/AthfanFasee/broker/event"
+	"github.com/AthfanFasee/payment/event"
 )
 
 type RabbitPayload struct {

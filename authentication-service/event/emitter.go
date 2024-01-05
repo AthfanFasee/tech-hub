@@ -56,7 +56,7 @@ func (e *Emitter) Push(event, key string) error {
 	return nil
 }
 
-// Creats a new emitter
+// Creates a new emitter
 func NewEventEmitter(conn *amqp.Connection) (Emitter, error) {
 	emitter := Emitter{
 		connection: conn,

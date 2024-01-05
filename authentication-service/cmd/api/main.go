@@ -121,7 +121,7 @@ func connectToRabbit(dsn string) (*amqp.Connection, error) {
 	var backOff = 1 * time.Second
 	var connection *amqp.Connection
 
-	// Wait until rabbitmq is ready
+	// Wait until rabbitMQ is ready
 	for {
 		c, err := amqp.Dial(dsn)
 		if err != nil {

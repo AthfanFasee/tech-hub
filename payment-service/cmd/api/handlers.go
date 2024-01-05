@@ -25,6 +25,7 @@ type stripePayload struct {
 	LastName      string `json:"last_name"`
 }
 
+// Gets payment intent
 func (app *application) getPaymentIntent(w http.ResponseWriter, r *http.Request) {
 	var payload stripePayload
 
@@ -59,7 +60,7 @@ func (app *application) getPaymentIntent(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// Create a customer and subscribe to plan
+// Creates a customer and subscribe to plan
 func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 	var stripeData stripePayload
 	err := json.NewDecoder(r.Body).Decode(&stripeData)
@@ -104,7 +105,7 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 			return
 		}
 
-		// Create a new transaction
+		// Create transaction
 		amount, err := strconv.Atoi(stripeData.Amount)
 		if err != nil {
 			app.serverErrorResponse(w, r, err)
@@ -128,7 +129,7 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 			return
 		}
 
-		// create order
+		// Create order
 		order := data.Order{
 			TransactionID: txnID,
 			CustomerID:    customerID,
@@ -152,7 +153,7 @@ func (app *application) createCustomerAndSubscribeToPlan(w http.ResponseWriter, 
 
 }
 
-// SaveCustomer saves a customer and returns id
+// Saves a customer and returns id
 func (app *application) SaveCustomer(firstName, lastName, email string) (int, error) {
 	customer := data.Customer{
 		FirstName: firstName,
@@ -167,7 +168,7 @@ func (app *application) SaveCustomer(firstName, lastName, email string) (int, er
 	return id, nil
 }
 
-// SaveTransaction saves a txn and returns id
+// Saves a transaction and returns id
 func (app *application) SaveTransaction(txn data.Transaction) (int, error) {
 	id, err := app.Models.Payment.InsertTransaction(txn)
 	if err != nil {
@@ -176,7 +177,7 @@ func (app *application) SaveTransaction(txn data.Transaction) (int, error) {
 	return id, nil
 }
 
-// SaveOrder saves a order and returns id
+// Saves an order and returns id
 func (app *application) SaveOrder(order data.Order) (int, error) {
 	id, err := app.Models.Payment.InsertOrder(order)
 	if err != nil {
@@ -212,7 +213,7 @@ func (app *application) RefundCharge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update refund status in the DB
+	// Update refund status in db
 	err = app.Models.Payment.UpdateOrderStatus(chargeToRefund.Id, 2)
 	if err != nil {
 		app.logViaRabbit("error", err.Error(), "log.ERROR")
@@ -225,6 +226,7 @@ func (app *application) RefundCharge(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Cancels Subscription
 func (app *application) CancelSubscription(w http.ResponseWriter, r *http.Request) {
 	var subToCancel struct {
 		ID            int    `json:"id"`
@@ -260,5 +262,4 @@ func (app *application) CancelSubscription(w http.ResponseWriter, r *http.Reques
 		app.serverErrorResponse(w, r, err)
 		return
 	}
-
 }

@@ -71,7 +71,7 @@ func (c CommentModel) GetAllForPost(postID int64) ([]*Comment, error) {
 	return comments, nil
 }
 
-// Creats a comment
+// Creates a comment
 func (c CommentModel) Insert(comment *Comment) error {
 	query := `
 	INSERT INTO comments (text, post_id, user_id, user_name)

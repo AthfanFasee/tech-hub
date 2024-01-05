@@ -42,7 +42,7 @@ type Customer struct {
 	Email     string `json:"email"`
 }
 
-// Order is the type for all orders
+// Order is the type for orders
 type Order struct {
 	ID            int  `json:"id"`
 	TransactionID int  `json:"transaction_id"`
@@ -52,6 +52,7 @@ type Order struct {
 	Amount        int  `json:"amount"`
 }
 
+// Inserts a transaction
 func (p PaymentModel) InsertTransaction(transaction Transaction) (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -75,7 +76,7 @@ func (p PaymentModel) InsertTransaction(transaction Transaction) (int, error) {
 	return int(id), nil
 }
 
-// InsertOrder inserts a new order, and returns its id
+// Inserts a new order, and returns its id
 func (p PaymentModel) InsertOrder(order Order) (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -102,7 +103,7 @@ func (p PaymentModel) InsertOrder(order Order) (int, error) {
 	return int(id), nil
 }
 
-// InsertOrder inserts a new order, and returns its id
+// Inserts a new order, and returns its id
 func (p PaymentModel) InsertCustomer(customer Customer) (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -127,6 +128,7 @@ func (p PaymentModel) InsertCustomer(customer Customer) (int, error) {
 	return int(id), nil
 }
 
+// Updates order status
 func (p PaymentModel) UpdateOrderStatus(id, statusID int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

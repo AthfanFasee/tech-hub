@@ -13,6 +13,7 @@ func (app *application) logError(r *http.Request, err error) {
 	log.Println(logMessage)
 }
 
+// Sends error response to client
 func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, status int, message interface{}) {
 	env := envelope{"error": message}
 
@@ -24,6 +25,7 @@ func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, st
 	}
 }
 
+// Logs server error to stdout and sends server error response
 func (app *application) serverErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.logError(r, err)
 

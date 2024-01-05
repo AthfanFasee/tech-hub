@@ -38,6 +38,7 @@ type application struct {
 	RabbitMQ *amqp.Connection
 }
 
+// Starts listening to http calls
 func (app *application) serve() error {
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", app.config.port),
@@ -83,7 +84,6 @@ func main() {
 	}
 	defer sqlConn.Close()
 
-	// Connect to rabbitmq.
 	rabbitConn, err := connectToRabbit(cfg.rabbitDSN)
 	if err != nil {
 		log.Println(err)
@@ -107,7 +107,7 @@ func main() {
 	}
 }
 
-// Connect to MariaDB
+// Opens a connection to mySQL
 func ConnectToMySql(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
@@ -123,12 +123,13 @@ func ConnectToMySql(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
+// Opens a connection to rabbitMQ
 func connectToRabbit(dsn string) (*amqp.Connection, error) {
 	var counts int64
 	var backOff = 1 * time.Second
 	var connection *amqp.Connection
 
-	// Wait until rabbitmq is ready
+	// Wait until rabbitMQ is ready
 	for {
 		c, err := amqp.Dial(dsn)
 		if err != nil {

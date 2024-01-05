@@ -22,7 +22,7 @@ type Models struct {
 	}
 }
 
-// Creats a new Model type
+// Creates a new Model type
 func NewModels(db *sql.DB) Models {
 	return Models{
 		Users: UserModel{DB: db},

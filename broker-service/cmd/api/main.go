@@ -35,6 +35,7 @@ type application struct {
 	RabbitMQ *amqp.Connection
 }
 
+// Starts listening to http calls
 func (app *application) serve() error {
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", app.config.port),
@@ -101,7 +102,7 @@ func connectToRabbit(dsn string) (*amqp.Connection, error) {
 	var backOff = 1 * time.Second
 	var connection *amqp.Connection
 
-	// Wait until rabbitmq is ready
+	// Wait until rabbitMQ is ready
 	for {
 		c, err := amqp.Dial(dsn)
 		if err != nil {

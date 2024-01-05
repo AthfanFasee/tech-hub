@@ -59,7 +59,7 @@ func main() {
 
 }
 
-// Creats a Mail instance
+// Creates a Mail instance
 func createMail(cfg config) Mail {
 	port, _ := strconv.Atoi(cfg.mail.Port)
 	m := Mail{

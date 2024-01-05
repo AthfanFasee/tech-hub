@@ -23,14 +23,15 @@ type Transaction struct {
 	BankReturnCode      string
 }
 
+// Handles charging
 func (c *Card) Charge(currency string, amount int) (*stripe.PaymentIntent, string, error) {
 	return c.CreatePaymentIntent(currency, amount)
 }
 
+// Creates payment intent
 func (c *Card) CreatePaymentIntent(currency string, amount int) (*stripe.PaymentIntent, string, error) {
 	stripe.Key = c.Secret
 
-	// Create a payment Intent
 	params := &stripe.PaymentIntentParams{
 		Amount:   stripe.Int64(int64(amount)),
 		Currency: stripe.String(currency),
@@ -117,6 +118,7 @@ func (c *Card) CreateCustomer(pm, email string) (*stripe.Customer, string, error
 	return cust, "", nil
 }
 
+// Handles refund
 func (c *Card) Refund(pi string, amount int) error {
 	stripe.Key = c.Secret
 	refundAmount := int64(amount)
@@ -134,6 +136,7 @@ func (c *Card) Refund(pi string, amount int) error {
 	return nil
 }
 
+// Cancels Subscription
 func (c *Card) CancelSubscription(subID string) error {
 	stripe.Key = c.Secret
 
@@ -149,6 +152,7 @@ func (c *Card) CancelSubscription(subID string) error {
 	return nil
 }
 
+// Returns error message for the specific error code
 func cardErrorMessage(code stripe.ErrorCode) string {
 	var msg string
 	switch code {

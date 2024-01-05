@@ -13,6 +13,7 @@ type Models struct {
 	}
 }
 
+// Creates a Models instance
 func NewModels(db *sql.DB) Models {
 	return Models{
 		Payment: PaymentModel{DB: db},

@@ -11,9 +11,9 @@ import (
 
 type envelope map[string]interface{}
 
-// Encode data into JSON
+// Encodes data into JSON
 func (app *application) writeJSON(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
-	// MarshalIndent will return a []byte containing the encoded JSON with any prefix and indent added
+	// json.MarshalIndent() returns a []byte containing the encoded JSON with any prefix and indent added
 	js, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		return err
@@ -22,8 +22,6 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 	// Append a newline to the JSON to make it easier to view in terminal
 	js = append(js, '\n')
 
-	// Go will not loop over if the map is nil
-	// The reason for not using Set here is that Set takes string as value, but in here our value is a []string
 	for key, value := range headers {
 		w.Header()[key] = value
 	}
@@ -35,7 +33,7 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 	return nil
 }
 
-// Decode JSON values
+// Decodes JSON values
 func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst interface{}) error {
 	// Limit the size of body to 1MB
 	maxBytes := 1_048_576
@@ -52,7 +50,6 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst int
 		var unmarshalTypeError *json.UnmarshalTypeError
 		var invalidUnmarshalError *json.InvalidUnmarshalError
 
-		// fmt.Errorf, errors.New both will return an error type which is an interface with Error() method attached
 		switch {
 		// This err comes when we pass a nil pointer. Unexpected errors from Server better be handled by panic()
 		case errors.As(err, &invalidUnmarshalError):
