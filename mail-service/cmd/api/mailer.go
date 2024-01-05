@@ -30,6 +30,7 @@ type Message struct {
 	DataMap     map[string]any
 }
 
+// Sends a mail
 func (m *Mail) SendSMTPMessage(msg Message) error {
 	if msg.From == "" {
 		msg.From = m.FromAddress
@@ -90,6 +91,7 @@ func (m *Mail) SendSMTPMessage(msg Message) error {
 	return nil
 }
 
+// Builds mail in html format
 func (m *Mail) buildHTMLMessage(msg Message) (string, error) {
 	templateToRender := "./templates/mail.html.gohtml"
 
@@ -112,6 +114,7 @@ func (m *Mail) buildHTMLMessage(msg Message) (string, error) {
 	return formattedMessage, nil
 }
 
+// Builds mail in plain text format
 func (m *Mail) buildPlainTextMessage(msg Message) (string, error) {
 	templateToRender := "./templates/mail.plain.gohtml"
 
@@ -130,6 +133,7 @@ func (m *Mail) buildPlainTextMessage(msg Message) (string, error) {
 	return plainMessage, nil
 }
 
+// Handles inline CSS
 func (m *Mail) inlineCSS(s string) (string, error) {
 	options := premailer.Options{
 		RemoveClasses:     false,
@@ -150,6 +154,7 @@ func (m *Mail) inlineCSS(s string) (string, error) {
 	return html, nil
 }
 
+// Returns the assigned encryption to the variable s
 func (m *Mail) getEncryption(s string) mail.Encryption {
 	switch s {
 	case "tls":

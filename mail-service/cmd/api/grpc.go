@@ -17,7 +17,7 @@ type MailService struct {
 	Application *application
 }
 
-// Register a user using ther credentials
+// Register a user using their credentials
 func (u *MailService) SendWelcomeMail(ctx context.Context, req *mail.SendWelcomeMailRequest) (*mail.SendWelcomeMailResponse, error) {
 	from := req.GetFrom()
 	to := req.GetTo()
