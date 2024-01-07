@@ -11,7 +11,7 @@ type Config struct {
 var (
 	configName = "app"
 	configType = "env"
-	configPath = "."
+	configPath = "/"
 )
 
 // Read configuration from environemnt variables
