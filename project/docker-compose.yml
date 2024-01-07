@@ -105,8 +105,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: secret
       MYSQL_DATABASE: posts
-      MYSQL_USER: root
-      MYSQL_PASSWORD: secret
     volumes: 
       - ./db-data/mysql/payment/:/var/lib/payment/
 
