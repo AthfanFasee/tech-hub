@@ -21,7 +21,7 @@ up:
 
 ## up_build: stops docker-compose (if running), builds all projects and starts docker compose
 .PHONY: up_build
-up_build: build_broker build_auth build_logger build_mail build_listener build_payment build_posts
+up_build: build_broker build_auth build_posts build_logger build_mail build_listener build_payment
 	@echo Stopping docker images (if running...)
 	docker-compose down
 	@echo Building (when required) and starting docker images...
@@ -56,6 +56,13 @@ build_auth:
 	chdir ..\authentication-service && set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0 && go build -o ${AUTH_BINARY} ./cmd/api
 	@echo Done!
 
+## build_posts: builds the posts binary as a linux executable
+.PHONY: build_posts
+build_posts:
+	@echo Building posts binary...
+	chdir ..\posts-service && set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0 && go build -o ${POSTS_BINARY} ./cmd/api
+	@echo Done!
+
 ## build_payment: builds the payment binary as a linux executable
 .PHONY: build_payment
 build_payment:
@@ -75,11 +82,4 @@ build_mail:
 build_listener:
 	@echo Building listener binary...
 	chdir ..\listener-service && set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0 && go build -o ${LISTENER_BINARY} .
-	@echo Done!
-	
-## build_posts: builds the posts binary as a linux executable
-.PHONY: build_posts
-build_posts:
-	@echo Building posts binary...
-	chdir ..\posts-service && set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0 && go build -o ${POSTS_BINARY} .
 	@echo Done!
