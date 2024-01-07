@@ -36,8 +36,6 @@ services:
       context: ./../authentication-service
       dockerfile: ./../authentication-service/authentication-service.dockerfile
     restart: always
-    ports:
-      - "8081:80"
     deploy:
       mode: replicated
       replicas: 1
@@ -49,8 +47,6 @@ services:
       context: ./../posts-service
       dockerfile: ./../posts-service/posts-service.dockerfile
     restart: always
-    ports:
-      - "8081:80"
     deploy:
       mode: replicated
       replicas: 1
