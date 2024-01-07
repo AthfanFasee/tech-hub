@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
 	"fmt"
@@ -15,8 +16,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
-
-const version = "1.0.0"
 
 type config struct {
 	port      int
@@ -77,7 +76,7 @@ func main() {
 
 	flag.Parse()
 
-	sqlConn, err := ConnectToMySql(cfg.mysqlDSN)
+	sqlConn, err := connectToMySQL(cfg.mysqlDSN)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
@@ -108,19 +107,45 @@ func main() {
 }
 
 // Opens a connection to mySQL
-func ConnectToMySql(dsn string) (*sql.DB, error) {
+func openDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.Ping()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = db.PingContext(ctx)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
 	return db, nil
+}
+
+// Connects to mySQL
+func connectToMySQL(dsn string) (*sql.DB, error) {
+	var counts int64
+
+	for {
+		connection, err := openDB(dsn)
+		if err != nil {
+			log.Println("MySQL not yet ready ...")
+			counts++
+		} else {
+			log.Println("Connected to MySQL!")
+			return connection, nil
+		}
+
+		if counts > 10 {
+			return nil, err
+		}
+
+		log.Println("Backing off for two seconds....")
+		time.Sleep(2 * time.Second)
+		continue
+	}
 }
 
 // Opens a connection to rabbitMQ

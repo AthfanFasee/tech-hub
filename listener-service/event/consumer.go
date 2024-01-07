@@ -60,7 +60,7 @@ func (consumer *Consumer) Listen(topics []string) error {
 	if err != nil {
 		return err
 	}
-	// Whenever a message is sent to the "logs_topic" exchange with a topic that matches any in the topics slice,
+	// Whenever a message is sent to the "tech_hub" exchange with a topic that matches any in the topics slice,
 	// it'll be routed to the queue represented by q.Name
 	for _, s := range topics {
 		ch.QueueBind(
@@ -93,7 +93,7 @@ func (consumer *Consumer) Listen(topics []string) error {
 		}
 	}()
 
-	fmt.Printf("Waiting for message [Exchange, Queue] [logs_topic, %s]\n", q.Name)
+	fmt.Printf("Waiting for message [Exchange, Queue] [tech_hub, %s]\n", q.Name)
 
 	<-forever
 

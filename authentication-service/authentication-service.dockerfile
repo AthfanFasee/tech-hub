@@ -1,7 +1,9 @@
 FROM alpine:latest
 
-RUN mkdir /app
+WORKDIR /app
 
 COPY authenticationApp /app
 
-CMD [ "app/authenticationApp" ]
+COPY app.env /app
+
+CMD [ "./authenticationApp" ]

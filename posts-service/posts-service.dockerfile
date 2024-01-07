@@ -1,7 +1,9 @@
 FROM alpine:latest
 
-RUN mkdir /app
+WORKDIR /app
 
 COPY postsApp /app
 
-CMD [ "app/postsApp" ]
+COPY app.env /app
+
+CMD [ "./postsApp" ]

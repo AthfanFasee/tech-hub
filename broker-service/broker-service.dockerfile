@@ -1,8 +1,10 @@
 # Build a very small docker image
 FROM alpine:latest
 
-RUN mkdir /app
+WORKDIR /app
 
 COPY brokerApp /app
 
-CMD [ "app/brokerApp" ]
+COPY app.env /app
+
+CMD [ "./brokerApp" ]

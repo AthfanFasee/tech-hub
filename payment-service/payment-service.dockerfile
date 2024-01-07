@@ -1,7 +1,9 @@
 FROM alpine:latest
 
-RUN mkdir /app
+WORKDIR /app
 
 COPY paymentApp /app
 
-CMD [ "app/paymentApp" ]
+COPY app.env /app
+
+CMD [ "./paymentApp" ]

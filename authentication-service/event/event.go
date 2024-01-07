@@ -7,12 +7,12 @@ import (
 // Creates an exchange
 func declareExchange(ch *amqp.Channel) error {
 	return ch.ExchangeDeclare(
-		"logs_topic", // Name
-		"topic",      // Type
-		true,         // Is it durable?
-		false,        // Auto-Deleted?
-		false,        // Internal?
-		false,        // No-wait?
-		nil,          // Any specific arguments?
+		"tech_hub", // Name
+		"topic",    // Type
+		true,       // Is it durable?
+		false,      // Auto-Deleted?
+		false,      // Internal?
+		false,      // No-wait?
+		nil,        // Any specific arguments?
 	)
 }

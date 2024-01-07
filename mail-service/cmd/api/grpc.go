@@ -51,9 +51,9 @@ func (app *application) gRPCListen() {
 	s := grpc.NewServer()
 	mail.RegisterMailServiceServer(s, &MailService{Application: app})
 
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to listen for gRPC: %v", err)
-	}
+	log.Printf("gRPC server started on port %v", app.config.gRPCPort)
 
-	log.Printf("gRPC Server started on port %v", app.config.gRPCPort)
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("Failed to start gRPC server: %v", err)
+	}
 }

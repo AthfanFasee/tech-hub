@@ -51,6 +51,7 @@ func main() {
 
 	app := application{
 		Mailer: createMail(cfg),
+		config: cfg,
 	}
 
 	log.Println("Starting authentication service")

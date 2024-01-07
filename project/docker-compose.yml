@@ -41,6 +41,8 @@ services:
       replicas: 1
     environment:
       DSN: "host=authentication-db port=5432 user=root password=secret dbname=auth sslmode=disable timezone=UTC connect_timeout=5"
+    env_file:
+      - ../authentication-service/app.env
   
   posts-service:
     build:
@@ -104,9 +106,9 @@ services:
       replicas: 1
     environment:
       MYSQL_ROOT_PASSWORD: secret
-      MYSQL_DATABASE: posts
+      MYSQL_DATABASE: payment
     volumes: 
-      - ./db-data/mysql/payment/:/var/lib/payment/
+      - ./db-data/mysql/payment/:/var/lib/mysql/
 
   posts-db:
     image: 'postgres:12-alpine'

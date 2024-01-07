@@ -58,6 +58,7 @@ func main() {
 
 	app := application{
 		Models: data.New(client),
+		config: cfg,
 	}
 
 	// Start gRPC server
@@ -80,7 +81,7 @@ func connectToMongo(mongoURL string) (*mongo.Client, error) {
 		return nil, err
 	}
 
-	log.Println("Connected to Mongo")
+	log.Println("Connected to mongoDB")
 
 	return con, nil
 }
