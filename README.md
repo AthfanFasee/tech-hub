@@ -18,6 +18,6 @@ In the project directory, you can run:
 
 ### `make up_build`
 
-To start the program in development mode
+To start the program in development mode.
 
 All the available commands are mentioned in Makefile in the project directory.
